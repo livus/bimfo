@@ -1,0 +1,22 @@
+journeysObj = {
+"headTexts":["Zeit","Fahrt","Nach","Steig","Abfahrten","Aktuell","Ankunft"],
+"stationName":"Wien Westbahnhof (U)",
+"stationEvaId":"1291501",
+"boardType":"dep",
+"imgPath":"/hafas-res/img/",
+"iconProductsSubPath":"vs_oebb/",
+"rtInfo":true,
+"journey":[
+{"id":"1852098115","ti":"10:30","da":"25.10.2026","pr":"BusVAB 1","st":"Flughafen Wien","lastStop":"Flughafen Wien Busterminal (Terminal 3/Busstra&#223;e)","ati":"11:10","tr":"","trChg":false,"rt":false,"rta":false}   
+,{"id":"544369815","ti":"10:41","da":"25.10.2026","pr":"S 50","st":"Unterpurkersdorf","lastStop":"Unterpurkersdorf Bahnhst","ati":"10:59","tr":"4","trChg":false,"rt":false,"rta":false}   
+,{"id":"543524810","ti":"10:53","da":"25.10.2026","pr":"REX 51","st":"St.P&#246;lten Hbf","lastStop":"St.P&#246;lten Hbf","ati":"11:54","tr":"5","trChg":false,"rt":false,"rta":false}   
+,{"id":"5443058111","ti":"10:56","da":"25.10.2026","pr":"S 50","st":"Eichgraben-Altlengbach","lastStop":"Eichgraben N&#214;-Altlengbach Bahnhst","ati":"11:37","tr":"4","trChg":false,"rt":false,"rta":false}   
+,{"id":"1852098116","ti":"11:00","da":"25.10.2026","pr":"BusVAB 1","st":"Flughafen Wien","lastStop":"Flughafen Wien Busterminal (Terminal 3/Busstra&#223;e)","ati":"11:40","tr":"","trChg":false,"rt":false,"rta":false}   
+,{"id":"544369816","ti":"11:11","da":"25.10.2026","pr":"S 50","st":"Unterpurkersdorf","lastStop":"Unterpurkersdorf Bahnhst","ati":"11:29","tr":"4","trChg":false,"rt":false,"rta":false}   
+,{"id":"543907811","ti":"11:18","da":"25.10.2026","pr":"CJX 5","st":"Ybbs/Donau","lastStop":"Ybbs/Donau Bahnhof","ati":"12:36","tr":"3","trChg":false,"rt":false,"rta":false}   
+,{"id":"543532810","ti":"11:23","da":"25.10.2026","pr":"REX 51","st":"St.P&#246;lten Hbf","lastStop":"St.P&#246;lten Hbf","ati":"12:24","tr":"5","trChg":false,"rt":false,"rta":false}   
+,{"id":"5443058112","ti":"11:26","da":"25.10.2026","pr":"S 50","st":"Eichgraben-Altlengbach","lastStop":"Eichgraben N&#214;-Altlengbach Bahnhst","ati":"12:07","tr":"4","trChg":false,"rt":false,"rta":false}   
+,{"id":"1852098117","ti":"11:30","da":"25.10.2026","pr":"BusVAB 1","st":"Flughafen Wien","lastStop":"Flughafen Wien Busterminal (Terminal 3/Busstra&#223;e)","ati":"12:10","tr":"","trChg":false,"rt":false,"rta":false}   
+],
+"maxJ":9
+}

@@ -1,0 +1,11 @@
+# Overlay for booting the firmware in Espressif QEMU (no hardware):
+#   idf.py -B build_qemu -D SDKCONFIG=build_qemu/sdkconfig -D SDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.qemu" build
+# QEMU emulates quad (not octal) PSRAM; everything else stays as on the board.
+CONFIG_SPIRAM_MODE_QUAD=y
+CONFIG_SPIRAM_MODE_OCT=n
+# No WiFi radio in QEMU: network through the emulated open_eth adapter.
+CONFIG_APP_QEMU=y
+CONFIG_ETH_USE_OPENETH=y
+# QEMU cannot DMA from PSRAM into the AES/SHA blocks; use software crypto there.
+CONFIG_MBEDTLS_HARDWARE_AES=n
+CONFIG_MBEDTLS_HARDWARE_SHA=n

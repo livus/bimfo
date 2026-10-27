@@ -1,0 +1,1 @@
+SLs.sls={"suggestions":[{"value":"Wien Westbahnhof (U)","id":"A=1@O=Wien Westbahnhof (U)@X=16337607@Y=48196870@U=81@L=001291501@B=1@p=1792663957@","extId":"001291501","type":"1","typeStr":"[Bhf/Hst]","xcoord":"16337607","ycoord":"48196870","state":"id","prodClass":"7037","weight":"14765"}]};SLs.showSuggestion();

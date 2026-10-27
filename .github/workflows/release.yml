@@ -1,0 +1,62 @@
+# Builds the firmware for a version tag (v1.0.0 = version.txt), publishes it as a GitHub
+# release and puts the browser flasher with the same firmware on GitHub Pages.
+# One-time setup: Settings -> Pages -> Source: "GitHub Actions".
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and package the firmware
+        uses: espressif/esp-idf-ci-action@v1
+        with:
+          esp_idf_version: v5.5.2
+          target: esp32s3
+          command: idf.py build && python tools/release.py --tag ${{ github.ref_name }}
+
+      # The build ran as root in Docker; the Pages upload changes file modes.
+      - name: Take over the build output
+        run: sudo chown -R "$(id -u):$(id -g)" dist
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          site="https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}/"
+          gh release create "$GITHUB_REF_NAME" dist/release/* \
+            --title "Bimfo ${GITHUB_REF_NAME#v}" \
+            --generate-notes \
+            --notes "Install from the browser: ${site}
+
+          - \`bimfo-${GITHUB_REF_NAME#v}-update.bin\`: update over Wi-Fi on the settings page (System → Firmware-Update). Keeps the settings.
+          - \`bimfo-${GITHUB_REF_NAME#v}-full.bin\`: whole flash image for esptool at address 0x0, for a first install. Erases the settings.
+          - Licences: \`LICENSE\` (firmware, MIT) and \`THIRD_PARTY_NOTICES.md\` (components it contains)."
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/site
+
+  pages:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,20 @@
+journeysObj = {
+"headTexts":["Zeit","Fahrt","Nach","Steig","Abfahrten","Aktuell","Ankunft"],
+"stationName":"Wien Westbahnhof (U)",
+"stationEvaId":"1291501",
+"boardType":"dep",
+"imgPath":"/hafas-res/img/",
+"iconProductsSubPath":"vs_oebb/",
+"rtInfo":true,
+"journey":[
+{"id":"964959810","ti":"10:30","da":"25.10.2026","pr":"Tram 52","st":"Wien Parlament (Dr.-Karl-Renner-Ring/Schleife)","lastStop":"Wien Parlament (Dr.-Karl-Renner-Ring/Schleife)","ati":"10:44","tr":"","trChg":false,"rt":false,"rta":false}   
+,{"id":"966713810","ti":"10:30","da":"25.10.2026","pr":"Tram 60","st":"Rodaun","lastStop":"Wien Rodaun (Schleife)","ati":"11:07","tr":"","trChg":false,"rt":false,"rta":false}   
+,{"id":"1852098115","ti":"10:30","da":"25.10.2026","pr":"BusVAB 1","st":"Flughafen Wien","lastStop":"Flughafen Wien Busterminal (Terminal 3/Busstra&#223;e)","ati":"11:10","tr":"","trChg":false,"rt":false,"rta":false}   
+,{"id":"964959810","ti":"10:31","da":"25.10.2026","pr":"Tram 52","st":"Wien Parlament (Dr.-Karl-Renner-Ring/Schleife)","lastStop":"Wien Parlament (Dr.-Karl-Renner-Ring/Schleife)","ati":"10:44","tr":"B","trChg":false,"rt":false,"rta":false}   
+,{"id":"966849810","ti":"10:32","da":"25.10.2026","pr":"Tram 52","st":"Baumgarten","lastStop":"Wien Baumgarten (Linzer Stra&#223;e)","ati":"10:54","tr":"A","trChg":false,"rt":false,"rta":false}   
+,{"id":"834087810","ti":"10:31","da":"25.10.2026","pr":"U6","st":"Siebenhirten","lastStop":"Wien Siebenhirten (U6)","ati":"10:47","tr":"2","trChg":false,"rt":false,"rta":false}   
+,{"id":"902940814","ti":"10:31","da":"25.10.2026","pr":"Tram 6","st":"Burggasse-Stadthalle","lastStop":"Wien Burggasse-Stadthalle (Innerer Neubaug&#252;rtel)","ati":"10:35","tr":"B","trChg":false,"rt":{"status":null,"dlm":"1","dlt":"10:32","dld":"25.10.2026"},"rta":false}   
+,{"id":"834604810","ti":"10:32","da":"25.10.2026","pr":"U6","st":"Floridsdorf","lastStop":"Wien Floridsdorf Bahnhof (U6)","ati":"10:51","tr":"1","trChg":false,"rt":false,"rta":false}   
+],
+"maxJ":7
+}

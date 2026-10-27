@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bimfo</title>
+<style>
+:root {
+  --bg: #f3f4f6; --card: #fff; --fg: #1f2328; --muted: #656d76; --line: #d0d7de;
+  --accent: #c8102e; --accent-fg: #fff; --ok: #1a7f37; --warn: #9a6700; --err: #cf222e;
+  --wl: #e2001a; --oebb: #000094; --amber: #ffd02a;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0d1117; --card: #161b22; --fg: #e6edf3; --muted: #8d96a0; --line: #30363d;
+          --ok: #3fb950; --warn: #d29922; --err: #f85149; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg);
+       font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding-bottom: 84px; }
+header { padding: 16px; max-width: 720px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
+header h1 { font-size: 20px; margin: 0; flex: 1; }
+main { max-width: 720px; margin: 0 auto; padding: 0 12px; }
+section { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; }
+h2 { font-size: 16px; margin: 0 0 10px; }
+label { display: block; margin: 10px 0 4px; font-weight: 600; font-size: 14px; }
+label.inline { display: flex; align-items: center; gap: 8px; font-weight: 400; margin: 8px 0; }
+input[type=text], input[type=password], input[type=number], input[type=time], select {
+  width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--bg); color: var(--fg); font: inherit; }
+input[type=range] { width: 100%; }
+button { font: inherit; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line);
+         background: var(--bg); color: var(--fg); cursor: pointer; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); font-weight: 600; }
+button.danger { color: var(--err); }
+button:disabled { opacity: .5; cursor: default; }
+.row { display: flex; gap: 8px; align-items: center; }
+.row > * { flex: 1; }
+.row > .shrink { flex: 0 0 auto; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.muted { color: var(--muted); font-size: 13px; }
+.chip { font-size: 12px; padding: 3px 8px; border-radius: 99px; border: 1px solid var(--line); white-space: nowrap; }
+.chip.ok { color: var(--ok); border-color: var(--ok); }
+.chip.warn { color: var(--warn); border-color: var(--warn); }
+.chip.err { color: var(--err); border-color: var(--err); }
+.list { list-style: none; margin: 0; padding: 0; }
+.list li { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.list li:last-child { border-bottom: 0; }
+.list .grow { flex: 1; min-width: 0; }
+.list .grow div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.badge { display: inline-block; min-width: 38px; text-align: center; font-weight: 700; font-size: 13px;
+         padding: 2px 6px; border-radius: 5px; color: #fff; background: #555; }
+.badge.metro { background: #444; } .badge.tram { background: var(--wl); } .badge.bus, .badge.nightbus { background: #1b5fa8; }
+.badge.sbahn { background: #0089c4; } .badge.train { background: var(--oebb); }
+.mins { font-weight: 700; min-width: 48px; text-align: right; }
+.results button { width: 100%; text-align: left; margin: 4px 0; }
+.checks { max-height: 320px; overflow: auto; border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; }
+.seg { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { flex: 1; border: 0; border-radius: 0; }
+.seg button.on { background: var(--accent); color: var(--accent-fg); }
+.editor { border: 2px dashed var(--line); border-radius: 10px; padding: 10px 12px; margin-top: 10px; }
+#savebar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--card); border-top: 1px solid var(--line);
+           padding: 12px 16px; display: flex; gap: 12px; align-items: center; justify-content: center; }
+#savebar .msg { flex: 0 1 460px; font-size: 14px; }
+#overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; z-index: 9; }
+#overlay div { background: var(--card); padding: 24px; border-radius: 12px; max-width: 360px; text-align: center; }
+progress { width: 100%; }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Bimfo</h1>
+  <span id="netchip" class="chip">…</span>
+</header>
+<main>
+
+<section id="sec-preview">
+  <h2>Aktuelle Abfahrten <span id="preview-title" class="muted"></span></h2>
+  <div id="notice" class="muted hidden"></div>
+  <ul id="preview" class="list"><li class="muted">Lade …</li></ul>
+  <div id="fetchinfo" class="muted"></div>
+</section>
+
+<section>
+  <h2>Haltestellen</h2>
+  <ul id="stops" class="list"></ul>
+  <p id="nostops" class="muted hidden">Noch keine Haltestelle eingerichtet.</p>
+  <button id="add-stop">+ Haltestelle hinzufügen</button>
+
+  <div id="editor" class="editor hidden">
+    <div class="seg" id="provider">
+      <button data-kind="wl" class="on">Wiener Linien</button>
+      <button data-kind="oebb">ÖBB</button>
+    </div>
+    <label for="search">Haltestelle suchen</label>
+    <div class="row">
+      <input type="text" id="search" placeholder="z. B. Westbahnhof" autocomplete="off">
+      <button class="shrink" id="search-btn">Suchen</button>
+    </div>
+    <div id="results" class="results"></div>
+
+    <div id="stop-details" class="hidden">
+      <label for="stop-name">Anzeigename</label>
+      <input type="text" id="stop-name" maxlength="47">
+      <div id="wl-lines" class="hidden">
+        <label>Linien und Richtungen <span class="muted">(nichts gewählt = alle)</span></label>
+        <div id="lines" class="checks"></div>
+      </div>
+      <div id="oebb-opts" class="hidden">
+        <label class="inline"><input type="checkbox" id="trains-only"> Nur Züge (ohne Straßenbahn, Bus, U-Bahn)</label>
+        <label for="oebb-lines">Nur diese Linien <span class="muted">(optional, durch Komma getrennt, z. B. S 50, REX 51)</span></label>
+        <input type="text" id="oebb-lines">
+      </div>
+      <label for="walk">Gehzeit zur Haltestelle (Minuten)</label>
+      <input type="number" id="walk" min="0" max="60" value="0">
+      <p class="muted">Abfahrten, die du nicht mehr erreichst, werden ausgeblendet.</p>
+      <div class="row">
+        <button class="primary" id="stop-ok">Übernehmen</button>
+        <button id="stop-cancel">Abbrechen</button>
+      </div>
+    </div>
+    <div id="editor-cancel-only" class="row" style="margin-top:8px"><button id="stop-cancel2">Abbrechen</button></div>
+  </div>
+</section>
+
+<section>
+  <h2>Anzeige</h2>
+  <label>Stil</label>
+  <div class="seg" id="theme">
+    <button data-theme="wl" class="on">Wiener Linien</button>
+    <button data-theme="oebb">ÖBB</button>
+  </div>
+  <label class="inline"><input type="checkbox" id="group"> Linien zusammenfassen (je Linie die nächsten zwei Abfahrten)</label>
+  <label class="inline"><input type="checkbox" id="flip"> Anzeige um 180° drehen</label>
+  <label for="brightness">Helligkeit: <span id="brightness-val"></span> %</label>
+  <input type="range" id="brightness" min="0" max="100" step="5">
+  <label>Nachtmodus</label>
+  <div class="grid3">
+    <div><span class="muted">von</span><input type="time" id="night-start"></div>
+    <div><span class="muted">bis</span><input type="time" id="night-end"></div>
+    <div><span class="muted">Helligkeit %</span><input type="number" id="night-brightness" min="0" max="100"></div>
+  </div>
+  <p class="muted">Gleiche Uhrzeiten schalten den Nachtmodus aus. 0 % schaltet die Anzeige ab.</p>
+  <label for="refresh">Aktualisierung alle … Sekunden</label>
+  <input type="number" id="refresh" min="15" max="600">
+</section>
+
+<section>
+  <h2>WLAN</h2>
+  <label for="ssid">Netzwerk</label>
+  <div class="row">
+    <input type="text" id="ssid" list="ssids" autocomplete="off">
+    <button class="shrink" id="scan">Suchen</button>
+  </div>
+  <datalist id="ssids"></datalist>
+  <label for="pass">Passwort</label>
+  <input type="password" id="pass" autocomplete="new-password">
+  <label for="hostname">Gerätename</label>
+  <input type="text" id="hostname" maxlength="31">
+  <p class="muted">Erreichbar unter http://<span id="host-preview"></span>.local. Änderungen an WLAN oder Gerätename starten das Gerät neu.</p>
+</section>
+
+<section>
+  <h2>System</h2>
+  <div id="sysinfo" class="muted"></div>
+  <label for="fw">Firmware-Update (.bin)</label>
+  <div class="row">
+    <input type="file" id="fw" accept=".bin">
+    <button class="shrink" id="fw-btn">Hochladen</button>
+  </div>
+  <progress id="fw-progress" class="hidden" max="100" value="0"></progress>
+  <div class="row" style="margin-top:12px">
+    <button id="setup-ap">Setup-WLAN öffnen</button>
+    <button id="reboot">Neustart</button>
+    <button id="reset" class="danger">Werkseinstellungen</button>
+  </div>
+</section>
+</main>
+
+<div id="savebar">
+  <span class="msg" id="savemsg">Alle Änderungen gespeichert.</span>
+  <button class="primary" id="save" disabled>Speichern</button>
+</div>
+<div id="overlay"><div><h2 id="ov-title"></h2><p id="ov-text"></p></div></div>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+let cfg = null;          // configuration being edited
+let dirty = false;
+let editing = null;      // {index, stop} while the stop editor is open
+let lastStatus = null;
+
+function el(tag, attrs, ...children) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k === "class") e.className = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v);
+  }
+  for (const c of children) e.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  return e;
+}
+
+async function api(path, opts = {}) {
+  const init = { method: opts.method || "GET", headers: {} };
+  if (init.method !== "GET") init.headers["X-Bimfo"] = "1";
+  if (opts.json !== undefined) {
+    init.headers["Content-Type"] = "application/json";
+    init.body = JSON.stringify(opts.json);
+  }
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), opts.timeout || 30000);
+  init.signal = ctrl.signal;
+  try {
+    const r = await fetch(path, init);
+    const text = await r.text();
+    let data = null;
+    try { data = text ? JSON.parse(text) : null; } catch (e) { /* not JSON */ }
+    if (!r.ok) throw new Error((data && data.error) || ("HTTP " + r.status));
+    return data;
+  } catch (e) {
+    if (e.name === "AbortError") throw new Error("Zeitüberschreitung");
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function setDirty(v) {
+  dirty = v;
+  $("save").disabled = !v;
+  $("savemsg").textContent = v ? "Ungespeicherte Änderungen." : "Alle Änderungen gespeichert.";
+}
+
+function fmtTime(unix) {
+  if (!unix) return "–";
+  return new Date(unix * 1000).toLocaleTimeString("de-AT", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Vienna" });
+}
+
+function fmtAgo(unix, now) {
+  if (!unix || !now) return "noch nie";
+  const s = Math.max(0, now - unix);
+  if (s < 90) return "vor " + s + " s";
+  if (s < 5400) return "vor " + Math.round(s / 60) + " min";
+  return "um " + fmtTime(unix);
+}
+
+// ----- status & preview -------------------------------------------------------
+
+async function refreshStatus() {
+  try {
+    const s = await api("/api/status", { timeout: 8000 });
+    lastStatus = s;
+    const chip = $("netchip");
+    if (s.wifi.connected) {
+      chip.textContent = "Online · " + s.wifi.ssid;
+      chip.className = "chip " + (s.fetch.consecutive_errors > 1 ? "warn" : "ok");
+    } else if (s.ap.active) {
+      chip.textContent = "Setup-WLAN " + s.ap.ssid;
+      chip.className = "chip warn";
+    } else {
+      chip.textContent = "Offline";
+      chip.className = "chip err";
+    }
+    let info = "Zuletzt aktualisiert " + fmtAgo(s.fetch.last_ok, s.time);
+    if (s.fetch.last_error) info += " · Fehler: " + s.fetch.last_error;
+    if (!s.time) info += " · Uhrzeit noch nicht bekannt";
+    $("fetchinfo").textContent = info;
+    const up = s.uptime > 86400 ? Math.floor(s.uptime / 86400) + " d" : Math.floor(s.uptime / 3600) + " h " + Math.floor(s.uptime / 60) % 60 + " min";
+    $("sysinfo").textContent = "Version " + s.version + " (" + s.partition + ") · läuft seit " + up +
+      " · IP " + (s.wifi.ip || "–") + (s.wifi.rssi ? " (" + s.wifi.rssi + " dBm)" : "") +
+      " · RAM frei " + Math.round(s.heap / 1024) + " kB, PSRAM " + Math.round(s.psram / 1024) + " kB";
+  } catch (e) {
+    $("netchip").textContent = "Gerät nicht erreichbar";
+    $("netchip").className = "chip err";
+  }
+}
+
+async function refreshBoard() {
+  try {
+    const b = await api("/api/board", { timeout: 8000 });
+    $("preview-title").textContent = b.title ? "· " + b.title : "";
+    $("notice").textContent = b.notice || "";
+    $("notice").classList.toggle("hidden", !b.notice);
+    const ul = $("preview");
+    ul.replaceChildren();
+    const deps = b.departures.slice(0, 8);
+    if (!deps.length) {
+      ul.append(el("li", { class: "muted" }, b.fetched_at ? "Derzeit keine Abfahrten." : "Noch keine Daten."));
+    }
+    for (const d of deps) {
+      const mins = d.cancelled ? "Ausfall" : (d.minutes <= 0 ? "jetzt" : d.minutes + " min");
+      const sub = [];
+      if (d.platform) sub.push("Steig " + d.platform);
+      if (d.planned) sub.push("plan " + fmtTime(d.planned));
+      if (d.delayed) sub.push("erwartet " + fmtTime(d.expected));
+      ul.append(el("li", {},
+        el("span", { class: "badge " + d.type }, d.line),
+        el("div", { class: "grow" }, el("div", {}, d.towards), el("div", { class: "muted" }, sub.join(" · "))),
+        el("span", { class: "mins" }, mins)));
+    }
+  } catch (e) {
+    $("preview").replaceChildren(el("li", { class: "muted" }, "Abfahrten nicht verfügbar: " + e.message));
+  }
+}
+
+// ----- configuration form -----------------------------------------------------
+
+function renderStops() {
+  const ul = $("stops");
+  ul.replaceChildren();
+  $("nostops").classList.toggle("hidden", cfg.stops.length > 0);
+  cfg.stops.forEach((s, i) => {
+    const lines = s.sel && s.sel.length
+      ? s.sel.map((x) => x.line + (x.dir ? " (" + x.dir + ")" : "")).join(", ")
+      : "alle Linien";
+    const meta = (s.kind === "oebb" ? "ÖBB" : "Wiener Linien") + " · " + lines +
+      (s.trains_only ? " · nur Züge" : "") + (s.walk ? " · " + s.walk + " min Gehzeit" : "");
+    ul.append(el("li", {},
+      el("div", { class: "grow" }, el("div", {}, s.name), el("div", { class: "muted" }, meta)),
+      el("button", { class: "shrink", title: "nach oben", onclick: () => moveStop(i, -1), ...(i ? {} : { disabled: "" }) }, "↑"),
+      el("button", { class: "shrink", onclick: () => openEditor(i) }, "Bearbeiten"),
+      el("button", { class: "shrink danger", onclick: () => { cfg.stops.splice(i, 1); renderStops(); setDirty(true); } }, "Entfernen")));
+  });
+  $("add-stop").disabled = cfg.stops.length >= 4;
+  $("add-stop").textContent = cfg.stops.length >= 4 ? "Maximal 4 Haltestellen" : "+ Haltestelle hinzufügen";
+}
+
+function moveStop(i, d) {
+  const j = i + d;
+  if (j < 0 || j >= cfg.stops.length) return;
+  [cfg.stops[i], cfg.stops[j]] = [cfg.stops[j], cfg.stops[i]];
+  renderStops();
+  setDirty(true);
+}
+
+function setSeg(container, attr, value) {
+  for (const b of container.querySelectorAll("button")) b.classList.toggle("on", b.dataset[attr] === value);
+}
+
+function fillForm() {
+  setSeg($("theme"), "theme", cfg.theme);
+  $("group").checked = cfg.group;
+  $("flip").checked = cfg.flip;
+  $("brightness").value = cfg.brightness;
+  $("brightness-val").textContent = cfg.brightness;
+  $("night-start").value = cfg.night.start;
+  $("night-end").value = cfg.night.end;
+  $("night-brightness").value = cfg.night.brightness;
+  $("refresh").value = cfg.refresh;
+  $("ssid").value = cfg.wifi.ssid;
+  $("pass").value = "";
+  $("pass").placeholder = cfg.wifi.has_pass ? "unverändert" : "";
+  $("hostname").value = cfg.hostname;
+  $("host-preview").textContent = cfg.hostname;
+  renderStops();
+}
+
+function bindForm() {
+  for (const b of $("theme").querySelectorAll("button")) {
+    b.addEventListener("click", () => { cfg.theme = b.dataset.theme; setSeg($("theme"), "theme", cfg.theme); setDirty(true); });
+  }
+  const bind = (id, fn) => $(id).addEventListener("input", () => { fn($(id)); setDirty(true); });
+  bind("group", (e) => cfg.group = e.checked);
+  bind("flip", (e) => cfg.flip = e.checked);
+  bind("brightness", (e) => { cfg.brightness = +e.value; $("brightness-val").textContent = e.value; });
+  bind("night-start", (e) => cfg.night.start = e.value || "00:00");
+  bind("night-end", (e) => cfg.night.end = e.value || "00:00");
+  bind("night-brightness", (e) => cfg.night.brightness = Math.min(100, Math.max(0, +e.value || 0)));
+  bind("refresh", (e) => cfg.refresh = Math.min(600, Math.max(15, +e.value || 30)));
+  bind("ssid", (e) => cfg.wifi.ssid = e.value.trim());
+  bind("pass", () => {});
+  bind("hostname", (e) => {
+    cfg.hostname = e.value.toLowerCase().replace(/[^a-z0-9-]/g, "").replace(/^-+/, "");
+    $("host-preview").textContent = cfg.hostname || "bimfo";
+  });
+}
+
+async function save() {
+  const out = JSON.parse(JSON.stringify(cfg));
+  delete out.wifi.has_pass;
+  if ($("pass").value) out.wifi.pass = $("pass").value;
+  $("save").disabled = true;
+  $("savemsg").textContent = "Speichere …";
+  try {
+    const r = await api("/api/config", { method: "POST", json: out });
+    setDirty(false);
+    $("pass").value = "";
+    if (r.restart) {
+      waitForRestart("Gespeichert – das Gerät startet neu.",
+        "Verbinde dein Telefon wieder mit „" + (out.wifi.ssid || "dem WLAN") + "“ und öffne http://" + out.hostname + ".local");
+    } else {
+      setTimeout(refreshBoard, 3000);
+    }
+  } catch (e) {
+    $("save").disabled = false;
+    $("savemsg").textContent = "Speichern fehlgeschlagen: " + e.message;
+  }
+}
+
+function waitForRestart(title, text) {
+  $("ov-title").textContent = title;
+  $("ov-text").textContent = text;
+  $("overlay").style.display = "flex";
+  const started = Date.now();
+  const poll = async () => {
+    if (Date.now() - started < 4000) return setTimeout(poll, 1000);
+    try {
+      await api("/api/status", { timeout: 3000 });
+      location.reload();
+    } catch (e) {
+      setTimeout(poll, 2000);
+    }
+  };
+  poll();
+}
+
+// ----- stop editor --------------------------------------------------------------
+
+function openEditor(index) {
+  const existing = index >= 0 ? cfg.stops[index] : null;
+  editing = { index, stop: existing ? JSON.parse(JSON.stringify(existing)) : { kind: "wl", name: "", id: 0, walk: 0, sel: [] } };
+  $("editor").classList.remove("hidden");
+  $("add-stop").classList.add("hidden");
+  setSeg($("provider"), "kind", editing.stop.kind);
+  $("search").value = existing ? existing.name : "";
+  $("results").replaceChildren();
+  if (existing) showDetails(); else { $("stop-details").classList.add("hidden"); $("editor-cancel-only").classList.remove("hidden"); }
+  $("search").focus();
+}
+
+function closeEditor() {
+  editing = null;
+  $("editor").classList.add("hidden");
+  $("add-stop").classList.remove("hidden");
+}
+
+async function doSearch() {
+  const q = $("search").value.trim();
+  if (q.length < 2) return;
+  const box = $("results");
+  box.replaceChildren(el("div", { class: "muted" }, "Suche …"));
+  try {
+    const path = editing.stop.kind === "oebb" ? "/api/oebb/search" : "/api/wl/search";
+    const res = await api(path + "?q=" + encodeURIComponent(q), { timeout: 45000 });
+    box.replaceChildren();
+    if (!res.length) box.append(el("div", { class: "muted" }, "Nichts gefunden."));
+    for (const r of res) {
+      box.append(el("button", { onclick: () => pickStation(r) }, r.name));
+    }
+  } catch (e) {
+    box.replaceChildren(el("div", { class: "muted" }, "Suche fehlgeschlagen: " + e.message));
+  }
+}
+
+function pickStation(r) {
+  const kind = editing.stop.kind;
+  editing.stop = { kind, name: r.name, id: r.id, walk: editing.stop.walk || 0, sel: [] };
+  if (kind === "oebb") editing.stop.trains_only = false;
+  $("results").replaceChildren();
+  showDetails();
+}
+
+async function showDetails() {
+  const s = editing.stop;
+  $("stop-details").classList.remove("hidden");
+  $("editor-cancel-only").classList.add("hidden");
+  $("stop-name").value = s.name;
+  $("walk").value = s.walk || 0;
+  $("wl-lines").classList.toggle("hidden", s.kind !== "wl");
+  $("oebb-opts").classList.toggle("hidden", s.kind !== "oebb");
+  if (s.kind === "oebb") {
+    $("trains-only").checked = !!s.trains_only;
+    $("oebb-lines").value = (s.sel || []).map((x) => x.line).join(", ");
+    return;
+  }
+  const box = $("lines");
+  box.replaceChildren(el("div", { class: "muted" }, "Lade Linien (Live-Abfrage) …"));
+  try {
+    const lines = await api("/api/wl/lines?id=" + s.id, { timeout: 30000 });
+    box.replaceChildren();
+    if (!lines.length) box.append(el("div", { class: "muted" }, "Derzeit keine Linien gemeldet – alle Linien werden angezeigt."));
+    const chosen = new Set((s.sel || []).map((x) => x.line + "|" + (x.dir || "")));
+    for (const l of lines) {
+      const cb = el("input", { type: "checkbox" });
+      cb.checked = chosen.has(l.line + "|" + l.dir);
+      cb.dataset.line = l.line; cb.dataset.dir = l.dir; cb.dataset.rbl = l.rbl;
+      box.append(el("label", { class: "inline" }, cb, el("span", { class: "badge " + l.type }, l.line), " → " + l.towards));
+    }
+  } catch (e) {
+    box.replaceChildren(el("div", { class: "muted" }, "Linien konnten nicht geladen werden (" + e.message + "). Ohne Auswahl werden alle Linien angezeigt."));
+  }
+}
+
+function applyEditor() {
+  const s = editing.stop;
+  s.name = $("stop-name").value.trim() || s.name;
+  s.walk = Math.min(60, Math.max(0, +$("walk").value || 0));
+  if (s.kind === "oebb") {
+    s.trains_only = $("trains-only").checked;
+    s.sel = $("oebb-lines").value.split(",").map((x) => x.trim()).filter(Boolean).slice(0, 8).map((line) => ({ line }));
+  } else {
+    const boxes = [...$("lines").querySelectorAll("input[type=checkbox]")];
+    if (boxes.length) {
+      s.sel = boxes.filter((b) => b.checked).slice(0, 8)
+        .map((b) => ({ line: b.dataset.line, dir: b.dataset.dir, rbl: +b.dataset.rbl }));
+    }
+  }
+  if (editing.index >= 0) cfg.stops[editing.index] = s; else cfg.stops.push(s);
+  closeEditor();
+  renderStops();
+  setDirty(true);
+}
+
+function bindEditor() {
+  $("add-stop").addEventListener("click", () => openEditor(-1));
+  for (const b of $("provider").querySelectorAll("button")) {
+    b.addEventListener("click", () => {
+      editing.stop = { kind: b.dataset.kind, name: "", id: 0, walk: editing.stop.walk || 0, sel: [] };
+      setSeg($("provider"), "kind", b.dataset.kind);
+      $("results").replaceChildren();
+      $("stop-details").classList.add("hidden");
+      $("editor-cancel-only").classList.remove("hidden");
+    });
+  }
+  $("search-btn").addEventListener("click", doSearch);
+  $("search").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); doSearch(); } });
+  $("stop-ok").addEventListener("click", applyEditor);
+  $("stop-cancel").addEventListener("click", closeEditor);
+  $("stop-cancel2").addEventListener("click", closeEditor);
+  $("lines").addEventListener("change", (e) => {
+    const n = $("lines").querySelectorAll("input:checked").length;
+    if (n > 8) { e.target.checked = false; alert("Höchstens 8 Linien pro Haltestelle."); }
+  });
+}
+
+// ----- system -----------------------------------------------------------------
+
+function bindSystem() {
+  $("scan").addEventListener("click", async () => {
+    $("scan").disabled = true;
+    $("scan").textContent = "…";
+    try {
+      const nets = await api("/api/wifi/scan", { timeout: 20000 });
+      $("ssids").replaceChildren(...nets.map((n) => el("option", { value: n.ssid }, n.rssi + " dBm")));
+      $("ssid").focus();
+    } catch (e) {
+      alert("Suche fehlgeschlagen: " + e.message);
+    }
+    $("scan").disabled = false;
+    $("scan").textContent = "Suchen";
+  });
+  $("fw-btn").addEventListener("click", () => {
+    const f = $("fw").files[0];
+    if (!f) return alert("Bitte zuerst eine .bin-Datei wählen.");
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/ota");
+    xhr.setRequestHeader("X-Bimfo", "1");
+    xhr.setRequestHeader("Content-Type", "application/octet-stream");
+    $("fw-progress").classList.remove("hidden");
+    xhr.upload.onprogress = (e) => { if (e.lengthComputable) $("fw-progress").value = 100 * e.loaded / e.total; };
+    xhr.onload = () => {
+      let msg = "";
+      try { msg = JSON.parse(xhr.responseText).error || ""; } catch (e) { /* ignore */ }
+      if (xhr.status === 200) waitForRestart("Update installiert", "Das Gerät startet mit der neuen Firmware neu …");
+      else alert("Update fehlgeschlagen: " + (msg || "HTTP " + xhr.status));
+      $("fw-progress").classList.add("hidden");
+    };
+    xhr.onerror = () => { alert("Update fehlgeschlagen: Verbindung abgebrochen"); $("fw-progress").classList.add("hidden"); };
+    xhr.send(f);
+  });
+  $("reboot").addEventListener("click", async () => {
+    if (!confirm("Gerät neu starten?")) return;
+    await api("/api/reboot", { method: "POST" }).catch(() => {});
+    waitForRestart("Neustart …", "Die Seite lädt neu, sobald das Gerät wieder da ist.");
+  });
+  $("reset").addEventListener("click", async () => {
+    if (!confirm("Alle Einstellungen (inkl. WLAN) löschen?")) return;
+    await api("/api/reset", { method: "POST" }).catch(() => {});
+    waitForRestart("Zurückgesetzt", "Verbinde dich danach mit dem WLAN „Bimfo-…“, um das Gerät neu einzurichten.");
+  });
+  $("setup-ap").addEventListener("click", async () => {
+    await api("/api/setup", { method: "POST" }).catch((e) => alert(e.message));
+    alert("Das Setup-WLAN ist für 10 Minuten aktiv (Name siehe Anzeige).");
+  });
+  $("save").addEventListener("click", save);
+  window.addEventListener("beforeunload", (e) => { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
+}
+
+async function init() {
+  bindForm();
+  bindEditor();
+  bindSystem();
+  try {
+    cfg = await api("/api/config");
+  } catch (e) {
+    $("savemsg").textContent = "Konfiguration nicht ladbar: " + e.message;
+    return;
+  }
+  cfg.stops = cfg.stops || [];
+  fillForm();
+  setDirty(false);
+  refreshStatus();
+  refreshBoard();
+  setInterval(refreshStatus, 10000);
+  setInterval(refreshBoard, 15000);
+}
+init();
+</script>
+</body>
+</html>

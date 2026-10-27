@@ -1,0 +1,22 @@
+menu "Bimfo"
+
+    config APP_DEV_WIFI_SSID
+        string "Development WiFi SSID"
+        default ""
+        help
+            Optional. Used only while no WiFi has been configured on the device
+            (via the setup page). Stored in sdkconfig, which is not committed.
+
+    config APP_DEV_WIFI_PASSWORD
+        string "Development WiFi password"
+        default ""
+
+    config APP_QEMU
+        bool "Emulator build (QEMU): Ethernet instead of WiFi, no LCD hardware"
+        default n
+        select ETH_USE_OPENETH
+        help
+            Only for running the firmware in Espressif QEMU (see sdkconfig.qemu).
+            Never enable this for the real board.
+
+endmenu

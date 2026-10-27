@@ -1,0 +1,7 @@
+{
+  "name": "bimfo-webtest",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "node page.test.mjs" },
+  "devDependencies": { "jsdom": "^24.1.0" }
+}

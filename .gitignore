@@ -1,0 +1,27 @@
+# ESP-IDF build output and generated config
+build/
+build_qemu/
+managed_components/
+sdkconfig
+sdkconfig.old
+*.bak
+
+# Host render/test harness output
+host/build/
+host/out/
+
+# Local, machine-specific editor settings
+.vscode/
+.cache/
+
+# Developer secrets (never commit WiFi credentials)
+main/secrets.h
+sdkconfig.local
+
+# Python / node leftovers from tooling
+__pycache__/
+*.pyc
+node_modules/
+
+# Release packages (tools/release.py)
+dist/
