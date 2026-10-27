@@ -3,31 +3,29 @@
 **Live tram, bus, U-Bahn and train departures for Vienna, in a 3D-printed replica of the classic
 Wiener Linien stop display.**
 
-Bimfo is an open-source departure monitor (*Abfahrtsmonitor*, *Echtzeitanzeige*) for the Waveshare
+Bimfo is an open-source departure monitor for the Waveshare
 **ESP32-S3-LCD-1.47B**. It shows real-time departures from the Wiener Linien and ÖBB APIs for the
 stops you choose, set up from your phone through a page the device serves itself. The printable
-enclosure is a 1:15 model of the grey "Linie … Abfahrt in Minuten" box at Vienna's *Bim* (tram) and
-bus stops, on its pole with the loudspeakers and red cap, standing on a piece of platform with the
-railing and the Mistkübel. Without the electronics, it prints as a static model.
+enclosure is a 1:15 model of Vienna's original *Bim* (tram) and bus stop displays.
 
 ![Bimfo at a Vienna tram stop](enclosure/img/makerworld/hero.png)
 
-## Which version do I need?
+## Hardware
 
-| | **Multicolour** (AMS) | **Single colour** (any printer, decals for the details) |
-|---|---|---|
-| **Live display** (ESP32 board + 90° USB-C cable) | [**A**: Multicolour, live display](enclosure/README.md#a-multicolour-live-display) | [**C**: Single colour, live display](enclosure/README.md#c-single-colour-live-display) |
-| **Static model** (no electronics) | [**B**: Multicolour, static model](enclosure/README.md#b-multicolour-static-model) | [**D**: Single colour, static model](enclosure/README.md#d-single-colour-static-model) |
+For the complete assembly you will need:
 
-Each link goes to a short section with that version's parts, filaments, decals and steps. The
-four versions are also print profiles on MakerWorld. A 0.4 mm nozzle prints everything; only the
-tiny black text on the box needs a 0.2 mm nozzle in multicolour, and the [decal sheet](enclosure/decals/decals.pdf)
-replaces it otherwise.
+- A Waveshare **ESP32-S3-LCD-1.47B** (e.g. from [Semaf](https://electronics.semaf.at/ESP32-S3-147-LCD-Entwicklungsboard-Type-B) if you live in Vienna),
+  with or without soldered pin headers.
+- A **90° "side-angle" USB-C cable**: the cable leaves the plug sideways, along its long side, and
+  is at most 4.4 mm thick. The plug head must fit in about 11 × 17.5 × 7.2 mm, for example the Lindy
+  32005. A straight plug doesn't fit. Alternatively, solder a thin two-wire lead to the VBUS and G
+  pads next to the USB port. Two short test prints check the board and the cable
+  ([how](enclosure/README.md#check-the-board-and-your-cable)).
+- A USB power supply.
+- The printed enclosure: STLs, Bambu Studio projects and instructions are in
+  [`enclosure/`](enclosure/README.md). It also prints as a static model without the electronics.
 
-For the live display (A or C), this page covers the firmware: [installing it](#installing-the-firmware)
-and [using it](#using-it).
-
-## What the display shows
+## Features
 
 Two styles, switchable on the settings page or with the BOOT button:
 
@@ -42,7 +40,8 @@ Two styles, switchable on the settings page or with the BOOT button:
 - A walking time per stop hides departures you can no longer reach.
 - Disruption notices as a scrolling ticker.
 - Brightness, night mode, refresh interval, 180° rotation.
-- Firmware updates from the settings page, with automatic rollback.
+- Firmware updates: automatically at night if you switch it on, or uploaded on the settings page.
+  Only updates signed with the Bimfo key are accepted, and a broken one rolls back by itself.
 
 ## Installing the firmware
 
@@ -54,12 +53,12 @@ Every [release](../../releases/latest) also has the files for other ways:
 
 | File | For |
 |---|---|
-| `bimfo-<version>-update.bin` | Updates over Wi-Fi: settings page → System → Firmware-Update. Keeps the settings. |
-| `bimfo-<version>-full.bin` | A first install with esptool: `esptool.py --chip esp32s3 write_flash 0x0 bimfo-<version>-full.bin`. Erases the settings. |
+| [`bimfo-update.bin`](../../releases/latest/download/bimfo-update.bin) | Updates over Wi-Fi: settings page → System → *Firmware-Datei hochladen*. Keeps the settings. |
+| [`bimfo-full.bin`](../../releases/latest/download/bimfo-full.bin) | A first install with esptool: `esptool.py --chip esp32s3 write_flash 0x0 bimfo-full.bin`. Erases the settings. |
 
 To build it yourself, see [Building and flashing](#building-and-flashing).
 
-## Using it
+## Setup
 
 ![setup screen](docs/img/setup.png)
 
@@ -76,13 +75,22 @@ To build it yourself, see [Building and flashing](#building-and-flashing).
 
 **BOOT button** (in the enclosure: the tab under the box, near the pole): short press switches the
 style; hold 3 s to open the setup Wi-Fi for 10 minutes, for example when moving to another network.
-Firmware updates are uploaded on the page (System → Firmware-Update); a broken update rolls back
-automatically.
 
-> **Updating from an "Abfahrtsmonitor" build:** the project was renamed to Bimfo, and the device
-> only accepts updates with its own project name. Install the first Bimfo firmware over USB, with
-> the [browser installer](#installing-the-firmware) (without *Erase device*) or `idf.py -p COMx
-> flash`; the settings are kept.
+### Updates
+
+On the settings page under *System*:
+
+* **Automatische Updates** (off by default): every night between 3 and 4 o'clock the device looks
+  for a new release on GitHub and installs it. It restarts once, and the settings are kept.
+* **Jetzt prüfen** checks right away, whether automatic updates are on or not.
+* **Firmware-Datei hochladen** installs a `bimfo-update.bin` you downloaded yourself.
+
+Either way, the device only installs firmware signed with the same key as the firmware it runs:
+an official Bimfo release accepts only official releases. A file from elsewhere, or one changed
+on the way, is refused. Automatic updates also skip versions that aren't newer, and versions that
+already failed to start once. A new version that doesn't start properly is rolled back at the next
+restart. Flashing over USB (browser installer, esptool) always works, whatever is installed.
+
 
 ## Building and flashing
 
@@ -97,6 +105,17 @@ idf.py -p COM8 flash monitor
 The partition table differs from the Waveshare demo (two OTA slots), so the first flash must be done
 over USB. Optional for development: `idf.py menuconfig` → *Bimfo* → Wi-Fi credentials (stored only
 in the untracked `sdkconfig`, used until Wi-Fi is set on the device).
+
+`idf.py build` leaves the app unsigned. An unsigned build runs normally but accepts no updates over
+the network (the settings page says so); flash it over USB. To use updates with your own builds,
+for example in a fork, make your own key, sign with it, and set *Bimfo → Firmware for automatic
+updates* to your repository:
+
+```
+espsecure.py generate_signing_key --version 2 --scheme rsa3072 my-key.pem
+espsecure.py extract_public_key --version 2 --keyfile my-key.pem tools/bimfo-release-key.pub.pem
+python tools/release.py --key my-key.pem      # signed images in dist/
+```
 
 ### First flash on the hardware: checklist
 
@@ -113,8 +132,9 @@ board:
    stripe).
 6. BOOT button: a short press switches the style, holding it 3 s brings back the setup screen.
 7. The brightness slider and night mode change the backlight; 0 % turns it off.
-8. Upload `build/bimfo.bin` on the page → it restarts into the other OTA slot (the status line shows
-   `ota_1`).
+8. Install a signed build: `python tools/release.py --key …` and the browser installer (below).
+   Upload `dist/release/bimfo-update.bin` on the page → it restarts into the other OTA slot (the
+   status line shows `ota_1`). Uploading the unsigned `build/bimfo.bin` is refused.
 
 ### Releasing
 
@@ -123,21 +143,36 @@ The version is in `version.txt`; the settings page shows it. To release:
 1. Raise `version.txt` (for example to `1.1.0`) and commit.
 2. Tag and push: `git tag v1.1.0 && git push origin main v1.1.0`.
 
-The [release workflow](.github/workflows/release.yml) builds the firmware with ESP-IDF 5.5.2,
-publishes a GitHub release with the update and full images, the licence and the third-party
-notices, and deploys the browser installer ([`web/`](web/index.html)) with the same firmware to
-GitHub Pages. It stops if the tag doesn't match `version.txt`. One-time setup: Settings → Pages →
-Source: *GitHub Actions*.
+3. GitHub asks you to approve the build (an e-mail and a notice on the workflow run). Approve it.
 
-`python tools/release.py` (in an ESP-IDF shell, after `idf.py build`) makes the same files locally
-in `dist/`. To try the installer: `python -m http.server -d dist/site 8000`, then open
+The [release workflow](.github/workflows/release.yml) builds the firmware with ESP-IDF 5.5.2, signs
+it with the release key, publishes a GitHub release with the update and full images, the licence
+and the third-party notices, and deploys the browser installer ([`web/`](web/index.html)) with the
+same firmware to GitHub Pages. Devices with automatic updates switched on install it the next
+night. The workflow stops if the tag doesn't match `version.txt`, or if the key doesn't match
+[`tools/bimfo-release-key.pub.pem`](tools/bimfo-release-key.pub.pem).
+
+**The release key** is an RSA-3072 key (`espsecure.py generate_signing_key --version 2 --scheme
+rsa3072`). Its public half is in the repository; the private key is kept by the maintainer and in
+the GitHub secret, never in the repository. Keep a backup: devices running a release accept
+updates only with this key, so without it they can only be updated over USB.
+
+One-time setup on GitHub:
+
+1. Settings → Pages → Source: *GitHub Actions*.
+2. Settings → Environments → *New environment* `release`:
+   * *Required reviewers*: yourself.
+   * *Deployment branches and tags*: *Selected branches and tags*, add the tag rule `v*`.
+   * *Environment secrets*: `BIMFO_SIGNING_KEY`, with the whole content of the private key file
+     (including the `BEGIN`/`END` lines).
+
+Only a tag build that you approved can read the key: someone who can push but can't approve can't
+publish a signed update.
+
+`python tools/release.py --key PATH` (in an ESP-IDF shell, after `idf.py build`) makes the same
+files locally in `dist/`. To try the installer: `python -m http.server -d dist/site 8000`, then open
 `http://localhost:8000` in Chrome or Edge.
 
-## Enclosure
-
-The printable model lives in [`enclosure/`](enclosure/README.md): OpenSCAD source, STLs, Bambu
-Studio projects, the decal sheet and the render scripts. Start with
-[Which version do I need?](#which-version-do-i-need).
 
 ## Testing without the device
 
@@ -184,30 +219,20 @@ from PSRAM.
 
 `python host/qemu_smoke.py` automates this: it boots the image, configures a Wiener Linien and an
 ÖBB stop through the device's API, waits for the device's own HTTPS fetches, and checks the board,
-heap, per-task stack head-room (`/api/status` → `stack_free`) and the serial log. It also uploads
-the image as an OTA update and checks that the device restarts into the other slot with its
-settings.
+heap, per-task stack head-room (`/api/status` → `stack_free`) and the serial log. Then it tests
+updates:
 
-## Layout
+* **Upload:** a random file, an unsigned image and an image signed with another key are refused. A
+  correctly signed image is installed, and the device restarts into the other slot with its
+  settings.
+* **Automatic update:** the update comes from a local server that redirects like GitHub releases.
+  The same version isn't installed, and a newer one signed with another key is refused. A newer,
+  correctly signed one is installed.
 
-```
-main/core/      portable logic, host-tested: data model, WL + ÖBB parsers, config (JSON),
-                Vienna time zone, text helpers, API JSON, captive DNS replies
-main/ui/        LVGL screens and both themes; fonts/ is generated (tools/gen_fonts.py)
-main/platform/  ESP-IDF glue: Wi-Fi/AP/captive portal, HTTPS fetch, fetch loop,
-                web server + OTA, NVS config store, display task (backlight, button),
-                LCD panel and LVGL port
-main/www/       the configuration page (embedded into the firmware)
-host/           render harness, tests, fuzzer, fixtures, mock server, page test
-tools/          font generator and font sources (Liberation Sans OFL, Adafruit 5x7 BSD),
-                release packager
-web/            the browser installer (GitHub Pages)
-enclosure/      the printable model, decal sheet and renders
-```
-
-Tasks: `display` (core 1, the only one touching LVGL), `fetch` (polls the stops), the HTTP server,
-and the DNS responder while the setup AP is up. They exchange copies of the configuration and the
-board through `platform/app_state.c` (one mutex).
+The QEMU build is signed at build time with a test key,
+[`host/qemu_test_signing_key.pem`](host/qemu_test_signing_key.pem). That key is public and is
+never used for releases. Run the smoke test in an ESP-IDF shell; it signs its test images with
+`espsecure`.
 
 ## Data sources
 
@@ -219,20 +244,6 @@ board through `platform/app_state.c` (one mutex).
   endpoints other open-source monitors use; they may change without notice.
 
 Bimfo is an independent project, not affiliated with Wiener Linien or ÖBB.
-
-## Robustness
-
-* A stop whose request fails keeps showing its last good departures (up to 15 min), and the header
-  shows *Offline – Stand HH:MM*; retries back off from 15 s to 5 min (longer when Wiener Linien
-  reports its rate limit, code 316).
-* Every stop gets an equal share of the 64 board slots, with at most 4 departures per line and
-  direction, so a large station cannot crowd out the others.
-* Countdown and clock are computed locally from the departure timestamps, so they keep ticking
-  between fetches; until SNTP syncs, the API's server time sets the clock.
-* Wi-Fi reconnects with backoff; if the network stays away for 30 s, the setup AP opens (the station
-  keeps retrying, but pauses while a phone is connected to the AP).
-* Firmware uploads are checked (image header, project name, checksum) before switching, and a new
-  firmware is only kept after it has run its UI for 30 s.
 
 ## Licence
 
@@ -251,4 +262,5 @@ Bimfo is an independent project, not affiliated with Wiener Linien or ÖBB.
 * Departure data: Wiener Linien / Stadt Wien – data.wien.gv.at (CC BY 4.0); ÖBB Scotty.
 * Render backgrounds: a CC0 photo from Wikimedia Commons and a CC0 HDRI from Poly Haven
   (see [`enclosure/render/`](enclosure/render/README.md)).
-* Inspired by the STRABA / catch.it mini-stops.
+* Inspired by the [catch.it / Straba](https://www.catch.it)
+  mini-stops.
