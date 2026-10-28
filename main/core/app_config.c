@@ -147,6 +147,7 @@ bool cfg_from_json(app_config_t *c, const char *json, char *err, size_t errlen)
     GET_INT(root, "brightness", 0, 100, n.brightness);
     GET_INT(root, "refresh", 15, 600, n.refresh_s);
     get_bool(root, "flip", &n.flip);
+    get_bool(root, "auto_update", &n.auto_update);
 
     const cJSON *night = cJSON_GetObjectItemCaseSensitive(root, "night");
     if (cJSON_IsObject(night)) {
@@ -189,6 +190,7 @@ char *cfg_to_json(const app_config_t *c, bool include_secrets)
     cJSON_AddNumberToObject(root, "brightness", c->brightness);
     cJSON_AddNumberToObject(root, "refresh", c->refresh_s);
     cJSON_AddBoolToObject(root, "flip", c->flip);
+    cJSON_AddBoolToObject(root, "auto_update", c->auto_update);
 
     char hhmm[8];
     cJSON *night = cJSON_AddObjectToObject(root, "night");

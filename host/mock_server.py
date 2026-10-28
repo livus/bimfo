@@ -31,12 +31,13 @@ TYPES = {"ptMetro": "metro", "ptTram": "tram", "ptTramWLB": "tram", "ptBusCity":
 state = {
     "config": {
         "wifi": {"ssid": "Zuhause", "has_pass": True}, "hostname": "bimfo", "theme": "wl", "group": True,
-        "brightness": 80, "refresh": 30, "flip": False,
+        "brightness": 80, "refresh": 30, "flip": False, "auto_update": False,
         "night": {"brightness": 15, "start": "22:00", "end": "06:00"},
         "stops": [{"kind": "wl", "name": "Westbahnhof", "id": 60201468, "walk": 3,
                    "sel": [{"line": "U3", "dir": "H", "rbl": 4921}, {"line": "U3", "dir": "R", "rbl": 4920}]}],
     },
     "saved": [],
+    "update_started": 0,    # time of the last "Jetzt prüfen"; a check takes 2 s
     "booted": time.time(),
 }
 LIVE = False
@@ -116,6 +117,15 @@ def board():
     return {"title": "Westbahnhof", "notice": "", "fetched_at": now - 12, "now": now, "departures": deps}
 
 
+def update_status(now):
+    busy = time.time() - state["update_started"] < 2
+    checked = state["update_started"] and not busy
+    return {"available": True, "auto": state["config"].get("auto_update", False), "busy": busy,
+            "progress": -1, "restarting": False, "last_check": int(state["update_started"]) if checked else 0,
+            "next_check": now + 6 * 3600 if state["config"].get("auto_update") else 0,
+            "message": "Prüfe" if busy else "Aktuell (neueste Version 1.0.0)" if checked else ""}
+
+
 def status():
     now = int(time.time())
     return {"version": "mock", "build": "", "idf": "", "partition": "ota_0", "hostname": state["config"]["hostname"],
@@ -125,7 +135,8 @@ def status():
                      "ip": "192.168.1.50", "rssi": -58, "disconnects": 0},
             "ap": {"active": False, "ssid": "", "clients": 0},
             "fetch": {"last_ok": now - 12, "last_attempt": now - 12, "ok": 42, "errors": 0,
-                      "consecutive_errors": 0, "last_error": ""}}
+                      "consecutive_errors": 0, "last_error": ""},
+            "update": update_status(now)}
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -183,6 +194,11 @@ class Handler(BaseHTTPRequestHandler):
             state["saved"].append(new)
             print("  saved config:", json.dumps(new, ensure_ascii=False))
             return self.send(200, {"ok": True, "restart": restart})
+        if self.path == "/api/update":
+            if time.time() - state["update_started"] < 2:
+                return self.send(409, {"error": "Es läuft bereits ein Update"})
+            state["update_started"] = time.time()
+            return self.send(200, {"ok": True, "restart": False})
         if self.path in ("/api/reboot", "/api/reset", "/api/setup", "/api/ota"):
             return self.send(200, {"ok": True, "restart": self.path != "/api/setup"})
         self.send(404, {"error": "not found"})

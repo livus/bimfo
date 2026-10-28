@@ -9,3 +9,9 @@ CONFIG_ETH_USE_OPENETH=y
 # QEMU cannot DMA from PSRAM into the AES/SHA blocks; use software crypto there.
 CONFIG_MBEDTLS_HARDWARE_AES=n
 CONFIG_MBEDTLS_HARDWARE_SHA=n
+# Signed with a test key at build time (never used for releases), and updates
+# come from the smoke test's server: QEMU's host is 10.0.2.2.
+CONFIG_SECURE_BOOT_BUILD_SIGNED_BINARIES=y
+CONFIG_SECURE_BOOT_SIGNING_KEY="host/qemu_test_signing_key.pem"
+CONFIG_APP_UPDATE_URL="http://10.0.2.2:8091/releases/latest/download/bimfo-update.bin"
+CONFIG_ESP_HTTPS_OTA_ALLOW_HTTP=y

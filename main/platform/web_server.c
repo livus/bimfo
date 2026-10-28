@@ -19,6 +19,7 @@
 #include "esp_wifi.h"
 #include "http_fetch.h"
 #include "textutil.h"
+#include "updater.h"
 #include "wifi_mgr.h"
 
 static const char *TAG = "web";
@@ -200,6 +201,18 @@ static esp_err_t status_get(httpd_req_t *req)
     cJSON_AddNumberToObject(f, "errors", fs.error_count);
     cJSON_AddNumberToObject(f, "consecutive_errors", fs.consecutive_errors);
     cJSON_AddStringToObject(f, "last_error", fs.last_error);
+
+    update_status_t us;
+    updater_get_status(&us);
+    cJSON *u = cJSON_AddObjectToObject(o, "update");
+    cJSON_AddBoolToObject(u, "available", us.available);
+    cJSON_AddBoolToObject(u, "auto", cfg->auto_update);
+    cJSON_AddBoolToObject(u, "busy", us.busy);
+    cJSON_AddNumberToObject(u, "progress", us.progress);
+    cJSON_AddBoolToObject(u, "restarting", us.restarting);
+    cJSON_AddNumberToObject(u, "last_check", (double)us.last_check);
+    cJSON_AddNumberToObject(u, "next_check", (double)us.next_check);
+    cJSON_AddStringToObject(u, "message", us.message);
     free(cfg);
     return send_json(req, o);
 }
@@ -376,9 +389,11 @@ static esp_err_t oebb_search_get(httpd_req_t *req)
     return send_json(req, api_oebb_stations_json(st, n < 0 ? 0 : n));
 }
 
-static esp_err_t ota_post(httpd_req_t *req)
+static esp_err_t ota_receive(httpd_req_t *req)
 {
-    if (!csrf_ok(req)) return ESP_OK;
+    if (!updater_signed()) {
+        return send_error(req, "400 Bad Request", "Diese Firmware ist nicht signiert (eigener Build): Updates nur über USB");
+    }
     const esp_partition_t *part = esp_ota_get_next_update_partition(NULL);
     if (!part) {
         return send_error(req, "500 Internal Server Error", "Keine OTA-Partition");
@@ -430,7 +445,8 @@ static esp_err_t ota_post(httpd_req_t *req)
         esp_err_t e = esp_ota_end(ota);
         ota = 0;
         if (e != ESP_OK) {
-            fail = e == ESP_ERR_OTA_VALIDATE_FAILED ? "Firmware beschädigt" : "OTA-Abschluss fehlgeschlagen";
+            fail = e == ESP_ERR_OTA_VALIDATE_FAILED ? "Firmware beschädigt oder nicht mit dem Bimfo-Schlüssel signiert"
+                                                    : "OTA-Abschluss fehlgeschlagen";
         } else if (esp_ota_set_boot_partition(part) != ESP_OK) {
             fail = "Boot-Partition nicht gesetzt";
         }
@@ -446,6 +462,27 @@ static esp_err_t ota_post(httpd_req_t *req)
     send_ok(req, true);
     schedule_restart();
     return ESP_OK;
+}
+
+static esp_err_t ota_post(httpd_req_t *req)
+{
+    if (!csrf_ok(req)) return ESP_OK;
+    if (!updater_lock()) {
+        return send_error(req, "409 Conflict", "Es läuft bereits ein Update");
+    }
+    esp_err_t r = ota_receive(req);
+    updater_unlock();
+    return r;
+}
+
+static esp_err_t update_post(httpd_req_t *req)
+{
+    if (!csrf_ok(req)) return ESP_OK;
+    const char *why = updater_check_now();
+    if (why) {
+        return send_error(req, "409 Conflict", why);
+    }
+    return send_ok(req, false);
 }
 
 static esp_err_t reboot_post(httpd_req_t *req)
@@ -513,6 +550,7 @@ void web_server_start(void)
         {.uri = "/api/wl/lines", .method = HTTP_GET, .handler = wl_lines_get},
         {.uri = "/api/oebb/search", .method = HTTP_GET, .handler = oebb_search_get},
         {.uri = "/api/ota", .method = HTTP_POST, .handler = ota_post},
+        {.uri = "/api/update", .method = HTTP_POST, .handler = update_post},
         {.uri = "/api/reboot", .method = HTTP_POST, .handler = reboot_post},
         {.uri = "/api/reset", .method = HTTP_POST, .handler = reset_post},
         {.uri = "/api/setup", .method = HTTP_POST, .handler = setup_post},

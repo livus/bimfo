@@ -11,6 +11,14 @@ menu "Bimfo"
         string "Development WiFi password"
         default ""
 
+    config APP_UPDATE_URL
+        string "Firmware for automatic updates"
+        default "https://github.com/livus/bimfo/releases/latest/download/bimfo-update.bin"
+        help
+            The update file of the newest release. A fork points this at its own
+            repository and signs its releases with its own key: the device only
+            installs updates signed with the key of the firmware it runs.
+
     config APP_QEMU
         bool "Emulator build (QEMU): Ethernet instead of WiFi, no LCD hardware"
         default n

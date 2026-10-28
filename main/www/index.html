@@ -163,7 +163,15 @@ progress { width: 100%; }
 <section>
   <h2>System</h2>
   <div id="sysinfo" class="muted"></div>
-  <label for="fw">Firmware-Update (.bin)</label>
+  <label class="inline"><input type="checkbox" id="auto-update"> Automatische Updates</label>
+  <p class="muted" id="update-hint">Sucht jede Nacht zwischen 3 und 4 Uhr auf GitHub nach einer neuen Version und
+    installiert sie. Das Gerät nimmt nur Versionen an, die mit dem Bimfo-Schlüssel signiert sind.</p>
+  <div class="row">
+    <span id="update-info" class="muted"></span>
+    <button class="shrink" id="update-check">Jetzt prüfen</button>
+  </div>
+  <progress id="update-progress" class="hidden" max="100" value="0"></progress>
+  <label for="fw">Firmware-Datei hochladen (.bin)</label>
   <div class="row">
     <input type="file" id="fw" accept=".bin">
     <button class="shrink" id="fw-btn">Hochladen</button>
@@ -271,10 +279,55 @@ async function refreshStatus() {
     $("sysinfo").textContent = "Version " + s.version + " (" + s.partition + ") · läuft seit " + up +
       " · IP " + (s.wifi.ip || "–") + (s.wifi.rssi ? " (" + s.wifi.rssi + " dBm)" : "") +
       " · RAM frei " + Math.round(s.heap / 1024) + " kB, PSRAM " + Math.round(s.psram / 1024) + " kB";
+    showUpdate(s.update, s.time);
   } catch (e) {
     $("netchip").textContent = "Gerät nicht erreichbar";
     $("netchip").className = "chip err";
   }
+}
+
+function showUpdate(u, now) {
+  if (!u) return;
+  $("auto-update").disabled = !u.available;
+  $("update-check").disabled = !u.available || u.busy;
+  $("update-progress").classList.toggle("hidden", !u.busy || u.progress < 0);
+  $("update-progress").value = Math.max(0, u.progress);
+  let info;
+  if (!u.available) {
+    info = "Diese Firmware ist nicht signiert (eigener Build): Updates nur über USB.";
+  } else if (u.busy) {
+    info = (u.message || "Prüfe") + " …" + (u.progress >= 0 ? " " + u.progress + " %" : "");
+  } else {
+    info = u.message ? u.message + " · " + fmtAgo(u.last_check, now) : "Noch nicht geprüft";
+    if (u.next_check) info += " · nächste Prüfung " + fmtDay(u.next_check);
+  }
+  $("update-info").textContent = info;
+  if (u.restarting) waitForRestart("Update installiert", "Das Gerät startet mit der neuen Firmware neu …");
+}
+
+function fmtDay(unix) {
+  return new Date(unix * 1000).toLocaleString("de-AT", { weekday: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Vienna" });
+}
+
+async function checkUpdate() {
+  $("update-check").disabled = true;
+  try {
+    await api("/api/update", { method: "POST" });
+  } catch (e) {
+    $("update-check").disabled = false;
+    return alert("Prüfen nicht möglich: " + e.message);
+  }
+  // Follow the check until it is done; the device restarts if it installed one.
+  const poll = async () => {
+    try {
+      const s = await api("/api/status", { timeout: 5000 });
+      showUpdate(s.update, s.time);
+      if (s.update.busy) setTimeout(poll, 1500);
+    } catch (e) {
+      waitForRestart("Update installiert", "Das Gerät startet mit der neuen Firmware neu …");
+    }
+  };
+  poll();
 }
 
 async function refreshBoard() {
@@ -343,6 +396,7 @@ function fillForm() {
   setSeg($("theme"), "theme", cfg.theme);
   $("group").checked = cfg.group;
   $("flip").checked = cfg.flip;
+  $("auto-update").checked = !!cfg.auto_update;
   $("brightness").value = cfg.brightness;
   $("brightness-val").textContent = cfg.brightness;
   $("night-start").value = cfg.night.start;
@@ -364,6 +418,7 @@ function bindForm() {
   const bind = (id, fn) => $(id).addEventListener("input", () => { fn($(id)); setDirty(true); });
   bind("group", (e) => cfg.group = e.checked);
   bind("flip", (e) => cfg.flip = e.checked);
+  bind("auto-update", (e) => cfg.auto_update = e.checked);
   bind("brightness", (e) => { cfg.brightness = +e.value; $("brightness-val").textContent = e.value; });
   bind("night-start", (e) => cfg.night.start = e.value || "00:00");
   bind("night-end", (e) => cfg.night.end = e.value || "00:00");
@@ -400,6 +455,7 @@ async function save() {
 }
 
 function waitForRestart(title, text) {
+  if ($("overlay").style.display === "flex") return;
   $("ov-title").textContent = title;
   $("ov-text").textContent = text;
   $("overlay").style.display = "flex";
@@ -570,6 +626,7 @@ function bindSystem() {
     xhr.onerror = () => { alert("Update fehlgeschlagen: Verbindung abgebrochen"); $("fw-progress").classList.add("hidden"); };
     xhr.send(f);
   });
+  $("update-check").addEventListener("click", checkUpdate);
   $("reboot").addEventListener("click", async () => {
     if (!confirm("Gerät neu starten?")) return;
     await api("/api/reboot", { method: "POST" }).catch(() => {});

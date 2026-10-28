@@ -97,6 +97,16 @@ try {
   click($("stop-ok"));
   check($("stops").children.length === 3, "third stop added");
 
+  console.log("updates");
+  check(!$("auto-update").checked && !$("auto-update").disabled, "automatic updates offered, off by default");
+  await until(() => $("update-info").textContent === "Noch nicht geprüft", "update info before the first check");
+  $("auto-update").checked = true;
+  $("auto-update").dispatchEvent(new w.Event("input", { bubbles: true }));
+  click($("update-check"));
+  await until(() => $("update-info").textContent.startsWith("Prüfe"), "check runs");
+  await until(() => $("update-info").textContent.startsWith("Aktuell (neueste Version 1.0.0)"), "check result shown", 10000);
+  check(!$("update-check").disabled, "check button enabled again");
+
   console.log("display settings and save");
   click($("theme").querySelector("[data-theme=oebb]"));
   type($("brightness"), "55");
@@ -108,6 +118,7 @@ try {
   const cfg = await (await fetch(BASE + "/api/config")).json();
   check(cfg.theme === "oebb" && cfg.brightness === 55 && cfg.hostname === "kueche", "display settings saved");
   check(cfg.stops.length === 3, "three stops saved");
+  check(cfg.auto_update === true, "automatic updates switched on");
   const wl = cfg.stops[1], oe = cfg.stops[2];
   check(wl.kind === "wl" && wl.id > 0 && wl.walk === 5, "WL stop id/walk");
   check(wl.sel.length === 2 && wl.sel.every((s) => s.rbl > 0 && (s.dir === "H" || s.dir === "R")), "WL selection with platform ids");

@@ -43,6 +43,7 @@ typedef struct {
     uint16_t night_end;
     uint16_t refresh_s;
     bool flip;                  // rotate the display by 180 degrees
+    bool auto_update;           // install new releases at night (off by default)
     uint8_t nstops;
     cfg_stop_t stops[CFG_MAX_STOPS];
 } app_config_t;

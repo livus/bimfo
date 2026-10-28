@@ -9,6 +9,7 @@
 #include "esp_log.h"
 #include "fetcher.h"
 #include "nvs_flash.h"
+#include "updater.h"
 #include "web_server.h"
 #include "wifi_mgr.h"
 
@@ -37,6 +38,7 @@ void app_main(void)
     app_state_init();       // loads the configuration
     display_task_start();   // LCD, LVGL and UI live in their own task
     wifi_mgr_start();
+    updater_start();        // nightly update check (when enabled)
     web_server_start();
     fetcher_start();
 }

@@ -1,6 +1,10 @@
-# Builds the firmware for a version tag (v1.0.0 = version.txt), publishes it as a GitHub
-# release and puts the browser flasher with the same firmware on GitHub Pages.
-# One-time setup: Settings -> Pages -> Source: "GitHub Actions".
+# Builds and signs the firmware for a version tag (v1.0.0 = version.txt), publishes it as a
+# GitHub release and puts the browser flasher with the same firmware on GitHub Pages.
+# One-time setup (see README, "Releasing"):
+#   Settings -> Pages -> Source: "GitHub Actions"
+#   Settings -> Environments -> "release": required reviewer, tags v*, and the secret
+#   BIMFO_SIGNING_KEY (the release key PEM). The build waits for approval before it can
+#   read the key.
 name: Release
 
 on:
@@ -19,15 +23,29 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: release
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build and package the firmware
+      # The build runs in Docker with the workspace mounted, so the key goes there
+      # (ignored by git) and is removed right after.
+      - name: Put the signing key in place
+        env:
+          KEY: ${{ secrets.BIMFO_SIGNING_KEY }}
+        run: |
+          umask 077
+          printf '%s\n' "$KEY" > release-signing-key.pem
+
+      - name: Build, sign and package the firmware
         uses: espressif/esp-idf-ci-action@v1
         with:
           esp_idf_version: v5.5.2
           target: esp32s3
-          command: idf.py build && python tools/release.py --tag ${{ github.ref_name }}
+          command: idf.py build && python tools/release.py --key release-signing-key.pem --tag ${{ github.ref_name }}
+
+      - name: Remove the signing key
+        if: always()
+        run: sudo rm -f release-signing-key.pem
 
       # The build ran as root in Docker; the Pages upload changes file modes.
       - name: Take over the build output
@@ -43,8 +61,8 @@ jobs:
             --generate-notes \
             --notes "Install from the browser: ${site}
 
-          - \`bimfo-${GITHUB_REF_NAME#v}-update.bin\`: update over Wi-Fi on the settings page (System → Firmware-Update). Keeps the settings.
-          - \`bimfo-${GITHUB_REF_NAME#v}-full.bin\`: whole flash image for esptool at address 0x0, for a first install. Erases the settings.
+          - \`bimfo-update.bin\`: update over Wi-Fi on the settings page (System → Firmware-Datei hochladen). Keeps the settings. Devices with automatic updates switched on install it at night.
+          - \`bimfo-full.bin\`: whole flash image for esptool at address 0x0, for a first install. Erases the settings.
           - Licences: \`LICENSE\` (firmware, MIT) and \`THIRD_PARTY_NOTICES.md\` (components it contains)."
 
       - uses: actions/upload-pages-artifact@v3

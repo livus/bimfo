@@ -12,6 +12,7 @@
 #include "oebb_parse.h"
 #include "textutil.h"
 #include "timeutil.h"
+#include "update_policy.h"
 #include "wl_parse.h"
 
 static int s_checks, s_failed;
@@ -372,11 +373,12 @@ static void test_config(void)
     cfg_defaults(&c);
     CHECK_STR(c.hostname, "bimfo");
     CHECK_INT(c.refresh_s, 30);
+    CHECK(!c.auto_update);  // automatic updates are opt-in
     char err[64];
 
     const char *json =
         "{\"wifi\":{\"ssid\":\"Zuhause\",\"pass\":\"geheim123\"},\"hostname\":\"Küchen Monitor!\","
-        "\"theme\":\"oebb\",\"group\":false,\"brightness\":500,\"refresh\":5,\"flip\":true,"
+        "\"theme\":\"oebb\",\"group\":false,\"brightness\":500,\"refresh\":5,\"flip\":true,\"auto_update\":true,"
         "\"night\":{\"brightness\":5,\"start\":\"23:15\",\"end\":\"6:05\"},"
         "\"stops\":[{\"kind\":\"wl\",\"name\":\"Westbahnhof\",\"id\":60201468,\"walk\":4,"
         "\"sel\":[{\"line\":\"U3\",\"dir\":\"H\",\"rbl\":4921},{\"line\":\"\"},{\"line\":\"6\",\"dir\":\"X\"}]},"
@@ -391,6 +393,7 @@ static void test_config(void)
     CHECK_INT(c.brightness, 100);
     CHECK_INT(c.refresh_s, 15);
     CHECK(c.flip);
+    CHECK(c.auto_update);
     CHECK_INT(c.night_brightness, 5);
     CHECK_INT(c.night_start, 23 * 60 + 15);
     CHECK_INT(c.night_end, 6 * 60 + 5);
@@ -413,6 +416,7 @@ static void test_config(void)
     CHECK_INT(c2.nstops, c.nstops);
     CHECK_INT(c2.stops[0].sel[0].rbl, 4921);
     CHECK_INT(c2.night_end, c.night_end);
+    CHECK(c2.auto_update);
     free(pub);
 
     // Full round trip including secrets.
@@ -636,6 +640,51 @@ static void test_api_json(void)
     cJSON_Delete(o);
 }
 
+static void test_update(void)
+{
+    int v[3];
+    CHECK(upd_parse_version("1.2.3", true, v) && v[0] == 1 && v[1] == 2 && v[2] == 3);
+    CHECK(upd_parse_version("v10.0.12", true, v) && v[0] == 10 && v[2] == 12);
+    CHECK(!upd_parse_version("1.2.3-rc1", true, v));
+    CHECK(upd_parse_version("1.2.3-dirty", false, v) && v[2] == 3);
+    CHECK(!upd_parse_version("1.2", false, v));
+    CHECK(!upd_parse_version("1..3", false, v));
+    CHECK(!upd_parse_version("", false, v));
+    CHECK(!upd_parse_version(NULL, false, v));
+    CHECK(!upd_parse_version("1.2.999999", false, v));
+
+    CHECK(upd_is_newer("1.0.1", "1.0.0"));
+    CHECK(upd_is_newer("1.1.0", "1.0.9"));
+    CHECK(upd_is_newer("2.0.0", "1.99.99"));
+    CHECK(upd_is_newer("1.10.0", "1.9.0"));         // numbers, not text
+    CHECK(!upd_is_newer("1.0.0", "1.0.0"));         // same version: nothing to do
+    CHECK(!upd_is_newer("0.9.9", "1.0.0"));         // never downgrade
+    CHECK(!upd_is_newer("1.1.0-rc1", "1.0.0"));     // pre-releases are not installed
+    CHECK(upd_is_newer("1.0.1", "1.0.0-dirty"));    // a development build updates by its numbers
+    CHECK(!upd_is_newer("1.0.1", "unknown"));
+    CHECK(!upd_is_newer("bimfo", "1.0.0"));
+
+    // Next check: 03:00 Vienna time strictly after now, plus the jitter.
+    int64_t evening = tu_vienna_to_utc(2026, 10, 27, 21, 0);
+    CHECK_INT(upd_next_check(evening, 0), tu_vienna_to_utc(2026, 10, 28, 3, 0));
+    CHECK_INT(upd_next_check(evening, 1234), tu_vienna_to_utc(2026, 10, 28, 3, 0) + 1234);
+    CHECK_INT(upd_next_check(evening, UPD_JITTER_S + 5), tu_vienna_to_utc(2026, 10, 28, 3, 0) + 5);
+    int64_t night = tu_vienna_to_utc(2026, 10, 28, 1, 30);
+    CHECK_INT(upd_next_check(night, 0), tu_vienna_to_utc(2026, 10, 28, 3, 0));
+    // At or after 03:00 (a check that just ran) the next one is tomorrow.
+    int64_t three = tu_vienna_to_utc(2026, 10, 28, 3, 0);
+    CHECK_INT(upd_next_check(three, 0), tu_vienna_to_utc(2026, 10, 29, 3, 0));
+    CHECK_INT(upd_next_check(three + 1800, 0), tu_vienna_to_utc(2026, 10, 29, 3, 0));
+    // Month and year ends, and both clock changes.
+    CHECK_INT(upd_next_check(tu_vienna_to_utc(2026, 12, 31, 12, 0), 0), tu_vienna_to_utc(2027, 1, 1, 3, 0));
+    CHECK_INT(upd_next_check(tu_vienna_to_utc(2026, 3, 28, 22, 0), 0), tu_vienna_to_utc(2026, 3, 29, 3, 0));
+    CHECK_INT(upd_next_check(tu_vienna_to_utc(2026, 10, 24, 22, 0), 0), tu_vienna_to_utc(2026, 10, 25, 3, 0));
+    CHECK_INT(tu_vienna_to_utc(2026, 3, 29, 3, 0) - tu_vienna_to_utc(2026, 3, 28, 3, 0), 23 * 3600);
+    tu_fields_t f;
+    tu_vienna_fields(upd_next_check(tu_vienna_to_utc(2026, 10, 24, 22, 0), 0), &f);
+    CHECK_INT(f.hour, 3);
+}
+
 int main(void)
 {
     test_time();
@@ -644,6 +693,7 @@ int main(void)
     test_wl_stations();
     test_oebb();
     test_config();
+    test_update();
     test_board();
     test_dns();
     test_api_json();

@@ -17,6 +17,13 @@ CONFIG_ESP_MAIN_TASK_STACK_SIZE=6144
 
 # OTA updates via the web page; a new image must prove itself (rollback)
 CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y
+# Updates (uploaded or automatic) must be signed with the key that signed the
+# running firmware. No eFuses are burned: USB flashing keeps working. The build
+# leaves the app unsigned; tools/release.py signs it with the release key.
+CONFIG_SECURE_SIGNED_APPS_NO_SECURE_BOOT=y
+CONFIG_SECURE_SIGNED_APPS_RSA_SCHEME=y
+CONFIG_SECURE_SIGNED_ON_UPDATE_NO_SECURE_BOOT=y
+CONFIG_SECURE_BOOT_BUILD_SIGNED_BINARIES=n
 # The firmware version is in version.txt.
 
 # Networking

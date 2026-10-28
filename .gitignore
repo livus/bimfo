@@ -25,3 +25,9 @@ node_modules/
 
 # Release packages (tools/release.py)
 dist/
+
+# Signing keys. Only the public release key and the QEMU test key are
+# committed; the release key itself stays with the maintainer and in CI.
+*.pem
+!tools/bimfo-release-key.pub.pem
+!host/qemu_test_signing_key.pem
