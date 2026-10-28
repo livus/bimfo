@@ -42,6 +42,18 @@
   .go:hover { filter: brightness(1.08); }
   .go:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
   .install p[slot] { color: var(--warn); margin: 0; }
+  [hidden] { display: none !important; }
+  .warning {
+    margin: 28px 0 8px; padding: 18px 20px; border: 1px solid var(--warn); border-radius: 10px;
+    background: rgba(255, 154, 92, 0.08);
+  }
+  .warning h2 { margin: 0 0 6px; color: var(--warn); font-size: 1.1rem; }
+  .warning p { margin: 6px 0; }
+  .copy {
+    font: inherit; color: var(--text); background: transparent; border: 1px solid var(--warn);
+    border-radius: 8px; padding: 6px 16px; margin: 6px 0; cursor: pointer;
+  }
+  .copy:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
   ol { padding-left: 1.3em; }
   li { margin: 6px 0; }
   li strong { color: var(--amber); font-weight: 600; }
@@ -63,7 +75,7 @@
   <img class="display" src="display.png" width="640" height="344"
        alt="The display in Wiener Linien style: line, destination and minutes in amber LED letters">
 
-  <div class="install">
+  <div class="install" id="install">
     <esp-web-install-button manifest="firmware/manifest.json">
       <button slot="activate" class="go">Install Bimfo</button>
       <p slot="unsupported">This browser can't flash a board. Open the page in Chrome or Edge on a computer.</p>
@@ -71,8 +83,15 @@
     </esp-web-install-button>
     <span class="version" id="version">Firmware</span>
   </div>
-  <p class="note">Chrome or Edge on Windows, macOS, Linux or ChromeOS. Safari, Firefox and phones can't talk to a
-    USB serial port.</p>
+  <p class="note" id="browser-note">Needs Chrome or Edge on a computer (Windows, macOS, Linux or ChromeOS).</p>
+
+  <div class="warning" id="no-flash" role="alert" hidden>
+    <h2>This browser can't install the firmware</h2>
+    <p id="no-flash-why">The installer talks to the board over USB (Web Serial). Chrome and Edge on a computer
+      can do that; Firefox, Safari and iPhones or iPads can't. Open this page in Chrome or Edge.</p>
+    <button type="button" class="copy" id="copy-link">Copy the link to this page</button>
+    <p class="note">Already running Bimfo? Updates don't need this page, see <a href="#updates">Later updates</a>.</p>
+  </div>
 
   <h2>Install</h2>
   <ol>
@@ -96,7 +115,7 @@
       the box) or unplug the board and plug it in again.</li>
   </ul>
 
-  <h2>Later updates</h2>
+  <h2 id="updates">Later updates</h2>
   <p>No cable needed. On the device's settings page under <em>System</em>, switch on
     <em>Automatische Updates</em>: the device then installs new versions at night by itself. Or
     download <code>bimfo-update.bin</code> from the <a id="releases" href="#">releases</a> and upload
@@ -121,6 +140,26 @@
     document.getElementById("repo").href = base;
     document.getElementById("notices").href = user && repo ? base + "/blob/main/THIRD_PARTY_NOTICES.md" : base;
     document.getElementById("releases").href = user && repo ? base + "/releases/latest" : base;
+  })();
+  // Flashing needs Web Serial, which only some browsers have (and only over https). Checking
+  // the feature, not the browser name, also gets Brave, Opera and future browsers right.
+  (function () {
+    var secure = window.isSecureContext, serial = "serial" in navigator;
+    if (secure && serial) return;
+    document.getElementById("install").hidden = true;
+    document.getElementById("browser-note").hidden = true;
+    document.getElementById("no-flash").hidden = false;
+    if (!secure) {
+      document.getElementById("no-flash-why").textContent =
+        "Flashing needs a secure connection. Open the page over https.";
+    }
+    var copy = document.getElementById("copy-link");
+    if (!navigator.clipboard) { copy.hidden = true; return; }
+    copy.addEventListener("click", function () {
+      navigator.clipboard.writeText(location.href).then(function () {
+        copy.textContent = "Link copied: paste it into Chrome or Edge";
+      }, function () { copy.hidden = true; });
+    });
   })();
   fetch("firmware/manifest.json")
     .then(function (r) { return r.json(); })
