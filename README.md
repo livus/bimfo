@@ -1,5 +1,10 @@
 # Bimfo
 
+[![Latest release](https://img.shields.io/github/v/release/livus/bimfo)](https://github.com/livus/bimfo/releases/latest)
+[![Firmware: MIT](https://img.shields.io/badge/firmware-MIT-blue)](LICENSE)
+[![Enclosure: CC BY-NC-SA 4.0](https://img.shields.io/badge/enclosure-CC%20BY--NC--SA%204.0-lightgrey)](enclosure/LICENSE)
+[![ESP-IDF 5.5](https://img.shields.io/badge/ESP--IDF-5.5-red)](https://docs.espressif.com/projects/esp-idf/en/v5.5.2/)
+
 **Live tram, bus, U-Bahn and train departures for Vienna, in a 3D-printed replica of the classic
 Wiener Linien stop display.**
 
