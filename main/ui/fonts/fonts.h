@@ -14,6 +14,7 @@ LV_FONT_DECLARE(font_led_16)
 LV_FONT_DECLARE(font_led_24)
 LV_FONT_DECLARE(font_wl_text)
 LV_FONT_DECLARE(font_wl_big)
+LV_FONT_DECLARE(font_wl_tram)
 
 /* Code point of the wheelchair glyph (LED fonts only). */
 #define LED_SYMBOL_WHEELCHAIR "\xE2\x99\xBF"
@@ -23,3 +24,7 @@ LV_FONT_DECLARE(font_wl_big)
 #define WL_SYMBOL_UBAHN "\xE2\x93\x8A"
 #define WL_SYMBOL_SBAHN "\xE2\x93\x88"
 #define WL_SYMBOL_NOW "\xE2\x96\xA0"
+
+/* font_wl_tram: the tram and a stretch of wire or rail. */
+#define WL_SYMBOL_TRAM "\xEE\x80\x80"
+#define WL_SYMBOL_WIRE "\xEE\x80\x81"

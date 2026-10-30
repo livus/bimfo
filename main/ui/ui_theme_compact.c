@@ -170,6 +170,11 @@ static void update(const ui_state_t *st, const board_t *b, int64_t now)
     ui_set_hidden(s.ticker, !ticker);
 }
 
+static void build_boot(lv_obj_t *scr)
+{
+    ui_tram_boot_build(scr, NULL);
+}
+
 const ui_theme_t ui_theme_compact = {
     .bg = WL_BG,
     .fg = WL_AMBER,
@@ -180,4 +185,6 @@ const ui_theme_t ui_theme_compact = {
     .strong_font = &font_led_16,
     .build_board = build,
     .update_board = update,
+    .build_boot = build_boot,
+    .update_boot = ui_tram_boot_update,
 };

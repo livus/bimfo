@@ -80,6 +80,17 @@ static void render(const char *name, const char *caption, const ui_state_t *st, 
     save(name, caption);
 }
 
+// Lets LVGL time pass (animations), in steps like the display task.
+static void advance(uint32_t ms)
+{
+    while (ms > 0) {
+        uint32_t step = ms < 20 ? ms : 20;
+        lv_tick_inc(step);
+        lv_timer_handler();
+        ms -= step;
+    }
+}
+
 static ui_state_t state(ui_screen_t screen, uint8_t theme)
 {
     ui_state_t st;
@@ -171,6 +182,15 @@ int main(void)
         strcpy(st.status, "Verbinde mit WLAN\n\xE2\x80\x9EZuhause\xE2\x80\x9C ...");
         snprintf(name, sizeof(name), "%s_boot", th);
         render(name, "boot, connecting", &st, NULL, 0);
+        if (t != THEME_OEBB) {
+            // The tram of the LED styles: pulling away, then the next one arriving.
+            advance(3500);
+            snprintf(name, sizeof(name), "%s_boot_out", th);
+            render(name, "1 s after pulling away", &st, NULL, 0);
+            advance(4000);
+            snprintf(name, sizeof(name), "%s_boot_in", th);
+            render(name, "the next tram arriving", &st, NULL, 0);
+        }
 
         st = state(UI_SCREEN_SETUP, (uint8_t)t);
         strcpy(st.ap_ssid, "Bimfo-1A2B");

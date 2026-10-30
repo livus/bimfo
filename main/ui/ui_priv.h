@@ -17,11 +17,22 @@ typedef struct {
     const lv_font_t *strong_font;
     void (*build_board)(lv_obj_t *scr);
     void (*update_board)(const ui_state_t *st, const board_t *b, int64_t now);
+    // Optional own start screen; NULL for the common one.
+    void (*build_boot)(lv_obj_t *scr);
+    void (*update_boot)(const ui_state_t *st);
 } ui_theme_t;
 
 extern const ui_theme_t ui_theme_wl;
 extern const ui_theme_t ui_theme_compact;
 extern const ui_theme_t ui_theme_oebb;
+
+// The green glow of the Wiener Linien panel (NULL if out of memory).
+const lv_img_dsc_t *ui_wl_glow(void);
+
+// Start screen of the LED styles (ui_boot_tram.c): a low-floor tram on the
+// glow `bg` (or the plain screen background if NULL).
+void ui_tram_boot_build(lv_obj_t *scr, const lv_img_dsc_t *bg);
+void ui_tram_boot_update(const ui_state_t *st);
 
 // Single-line label at a fixed position; `w` 0 means size to content.
 lv_obj_t *ui_label(lv_obj_t *parent, const lv_font_t *font, uint32_t color, int x, int y, int w,

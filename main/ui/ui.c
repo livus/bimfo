@@ -167,7 +167,11 @@ void ui_update(const ui_state_t *st, const board_t *b, int64_t now)
         lv_obj_set_style_bg_color(s_ui.scr, lv_color_hex(th->bg), 0);
         switch (st->screen) {
         case UI_SCREEN_BOOT:
-            build_boot(th);
+            if (th->build_boot) {
+                th->build_boot(s_ui.scr);
+            } else {
+                build_boot(th);
+            }
             break;
         case UI_SCREEN_SETUP:
             build_setup(th, st);
@@ -182,8 +186,12 @@ void ui_update(const ui_state_t *st, const board_t *b, int64_t now)
     }
     switch (st->screen) {
     case UI_SCREEN_BOOT:
-        ui_set_text(s_ui.boot_status, st->status);
-        ui_set_text(s_ui.boot_url, st->url);
+        if (th->update_boot) {
+            th->update_boot(st);
+        } else {
+            ui_set_text(s_ui.boot_status, st->status);
+            ui_set_text(s_ui.boot_url, st->url);
+        }
         break;
     case UI_SCREEN_SETUP:
         break;

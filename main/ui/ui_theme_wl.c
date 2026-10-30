@@ -76,7 +76,7 @@ static uint8_t dither(float v, int step, float t)
 
 // The glow of the panel, computed once (RGB565 with ordered dithering against
 // banding). Allocated for good: it lives as long as the program.
-static const lv_img_dsc_t *glow(void)
+const lv_img_dsc_t *ui_wl_glow(void)
 {
     if (s_glow.data) {
         return &s_glow;
@@ -114,7 +114,7 @@ static lv_obj_t *text_label(lv_obj_t *scr, int x, int y, int w, lv_label_long_mo
 
 static void build(lv_obj_t *scr)
 {
-    const lv_img_dsc_t *bg = glow();
+    const lv_img_dsc_t *bg = ui_wl_glow();
     if (bg) {
         lv_obj_t *img = lv_img_create(scr);
         lv_img_set_src(img, bg);
@@ -393,6 +393,11 @@ static void update(const ui_state_t *st, const board_t *b, int64_t now)
     ui_set_hidden(s.ticker, !ticker);
 }
 
+static void build_boot(lv_obj_t *scr)
+{
+    ui_tram_boot_build(scr, ui_wl_glow());
+}
+
 const ui_theme_t ui_theme_wl = {
     .bg = WL_GLOW_EDGE,
     .fg = WL_AMBER,
@@ -403,4 +408,6 @@ const ui_theme_t ui_theme_wl = {
     .strong_font = &font_led_16,
     .build_board = build,
     .update_board = update,
+    .build_boot = build_boot,
+    .update_boot = ui_tram_boot_update,
 };
