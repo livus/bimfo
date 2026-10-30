@@ -589,6 +589,8 @@ drv_d = 5;              // driver can
 drv_len = 3.6;
 flare_len = spk_len - drv_len;
 pin_d = 1.6;
+plug_root_h = 3;        // phase plug: cone where it joins the throat
+plug_root_d = 4.4;
 yoke_gap = 0.1;         // driver can to yoke arm
 yoke_t = 1.5;
 yoke_fillet = 0.6;      // 45-degree fillet where each arm meets the plate
@@ -630,6 +632,15 @@ module horn_local() {   // mouth at z = 0, driver on top, pivot pins along x
     // bullet phase plug, flush with the mouth so it prints from the bed
     cylinder(d1 = 1.4, d2 = 2.4, h = 0.5);
     translate([0, 0, 0.5 - eps]) cylinder(d = 2.4, h = flare_len - 0.5);
+    // The plug widens into the throat: a plain 2.4 mm column breaks off along a layer
+    // line where it joins the horn.
+    intersection() {
+        hull() {
+            linear_extrude(eps) mouth_2d();
+            translate([0, 0, flare_len]) cylinder(d = drv_d, h = eps);
+        }
+        translate([0, 0, flare_len - plug_root_h]) cylinder(d1 = 2.4, d2 = plug_root_d, h = plug_root_h);
+    }
 }
 
 module horn_placed(dir) {   // -1: front corner, faces the front; +1: back corner, faces the back
