@@ -21,6 +21,9 @@ typedef struct {
     ui_screen_t screen;
     uint8_t theme;                      // theme_t
     bool group_lines;
+    bool wl_notice;                     // Wiener Linien style: show the traffic info ticker
+    bool wl_paging;                     // ... page through more lines than fit
+    bool wl_step_free;                  // ... alternate with the next low-floor tram
     bool no_stops;                      // board screen: nothing configured yet
     uint8_t walk_min[BOARD_MAX_STOPS];  // per configured stop
     char status[96];                    // boot line, or a warning on the board ("Offline")

@@ -184,6 +184,41 @@ bool tx_strip_suffix(char *s, const char *suffix)
     return false;
 }
 
+void tx_split_transfers(const char *towards, char *name, size_t n, char *marks, size_t mn)
+{
+    char buf[96];   // destinations are at most 48 bytes
+    size_t o = 0, m = 0;
+    buf[0] = 0;
+    marks[0] = 0;
+    for (const char *p = towards; *p;) {
+        while (*p == ' ') p++;
+        const char *w = p;
+        while (*p && *p != ' ') p++;
+        size_t len = (size_t)(p - w);
+        if (len == 0) break;
+        bool comma = w[len - 1] == ',';
+        if (len - comma == 1 && (w[0] == 'U' || w[0] == 'S')) {
+            if (m + 1 < mn && !strchr(marks, w[0])) {
+                marks[m++] = w[0];
+                marks[m] = 0;
+            }
+            // "Stadthalle U, X": the comma stays with the name.
+            if (comma && o > 0 && buf[o - 1] != ',' && o + 1 < sizeof(buf)) {
+                buf[o++] = ',';
+                buf[o] = 0;
+            }
+            continue;
+        }
+        if (o + 1 + len >= sizeof(buf)) break;
+        if (o) buf[o++] = ' ';
+        memcpy(buf + o, w, len);
+        o += len;
+        buf[o] = 0;
+    }
+    while (o && buf[o - 1] == ',') buf[--o] = 0;
+    tx_copy(name, buf, n);
+}
+
 // Maps the Latin-1 supplement (U+00C0..U+00FF) to plain lowercase ASCII.
 static const char *fold_latin1(uint32_t cp)
 {

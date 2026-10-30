@@ -128,9 +128,14 @@ progress { width: 100%; }
   <label>Stil</label>
   <div class="seg" id="theme">
     <button data-theme="wl" class="on">Wiener Linien</button>
+    <button data-theme="compact">Kompakt</button>
     <button data-theme="oebb">ÖBB</button>
   </div>
-  <label class="inline"><input type="checkbox" id="group"> Linien zusammenfassen (je Linie die nächsten zwei Abfahrten)</label>
+  <!-- data-themes: the styles a setting applies to; it is hidden for the others -->
+  <label class="inline" data-themes="compact"><input type="checkbox" id="group"> Linien zusammenfassen (je Linie die nächsten zwei Abfahrten)</label>
+  <label class="inline" data-themes="wl"><input type="checkbox" id="wl-paging"> Mehr Linien als Platz: seitenweise durchblättern</label>
+  <label class="inline" data-themes="wl"><input type="checkbox" id="wl-step-free"> Ist die nächste Straßenbahn nicht barrierefrei: abwechselnd die nächste barrierefreie zeigen</label>
+  <label class="inline" data-themes="wl"><input type="checkbox" id="wl-notice"> Störungsmeldungen zeigen (die echten Anzeigen tun das nicht)</label>
   <label class="inline"><input type="checkbox" id="flip"> Anzeige um 180° drehen</label>
   <label for="brightness">Helligkeit: <span id="brightness-val"></span> %</label>
   <input type="range" id="brightness" min="0" max="100" step="5">
@@ -392,9 +397,20 @@ function setSeg(container, attr, value) {
   for (const b of container.querySelectorAll("button")) b.classList.toggle("on", b.dataset[attr] === value);
 }
 
+// Shows only the settings that apply to the selected style.
+function showThemeSettings() {
+  for (const el of document.querySelectorAll("[data-themes]")) {
+    el.classList.toggle("hidden", !el.dataset.themes.split(" ").includes(cfg.theme));
+  }
+}
+
 function fillForm() {
   setSeg($("theme"), "theme", cfg.theme);
+  showThemeSettings();
   $("group").checked = cfg.group;
+  $("wl-notice").checked = !!cfg.wl_notice;
+  $("wl-paging").checked = cfg.wl_paging !== false;
+  $("wl-step-free").checked = cfg.wl_step_free !== false;
   $("flip").checked = cfg.flip;
   $("auto-update").checked = !!cfg.auto_update;
   $("brightness").value = cfg.brightness;
@@ -413,10 +429,18 @@ function fillForm() {
 
 function bindForm() {
   for (const b of $("theme").querySelectorAll("button")) {
-    b.addEventListener("click", () => { cfg.theme = b.dataset.theme; setSeg($("theme"), "theme", cfg.theme); setDirty(true); });
+    b.addEventListener("click", () => {
+      cfg.theme = b.dataset.theme;
+      setSeg($("theme"), "theme", cfg.theme);
+      showThemeSettings();
+      setDirty(true);
+    });
   }
   const bind = (id, fn) => $(id).addEventListener("input", () => { fn($(id)); setDirty(true); });
   bind("group", (e) => cfg.group = e.checked);
+  bind("wl-notice", (e) => cfg.wl_notice = e.checked);
+  bind("wl-paging", (e) => cfg.wl_paging = e.checked);
+  bind("wl-step-free", (e) => cfg.wl_step_free = e.checked);
   bind("flip", (e) => cfg.flip = e.checked);
   bind("auto-update", (e) => cfg.auto_update = e.checked);
   bind("brightness", (e) => { cfg.brightness = +e.value; $("brightness-val").textContent = e.value; });

@@ -17,6 +17,12 @@ void tx_trim(char *s);
 // Removes a suffix (exact match) if present; returns true if removed.
 bool tx_strip_suffix(char *s, const char *suffix);
 
+// Wiener Linien destinations mark interchanges with a separate "U" or "S" word
+// ("Stadion U", "Praterstern S U", "Parlament, U Volkstheater"). Copies the
+// name without those words to `name` and the letters, in order and without
+// repeats, to `marks` ("SU").
+void tx_split_transfers(const char *towards, char *name, size_t n, char *marks, size_t mn);
+
 // Lowercases and strips accents (ä->a, ß->ss, ...) for forgiving searches.
 void tx_fold(const char *in, char *out, size_t n);
 

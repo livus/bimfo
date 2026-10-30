@@ -12,6 +12,14 @@ LV_FONT_DECLARE(font_sans_bold_22)
 LV_FONT_DECLARE(font_sans_italic_12)
 LV_FONT_DECLARE(font_led_16)
 LV_FONT_DECLARE(font_led_24)
+LV_FONT_DECLARE(font_wl_text)
+LV_FONT_DECLARE(font_wl_big)
 
 /* Code point of the wheelchair glyph (LED fonts only). */
 #define LED_SYMBOL_WHEELCHAIR "\xE2\x99\xBF"
+
+/* font_wl_text: U-Bahn and S-Bahn in a circle, and the square shown for a
+   vehicle departing now. */
+#define WL_SYMBOL_UBAHN "\xE2\x93\x8A"
+#define WL_SYMBOL_SBAHN "\xE2\x93\x88"
+#define WL_SYMBOL_NOW "\xE2\x96\xA0"

@@ -87,6 +87,8 @@ static ui_state_t state(ui_screen_t screen, uint8_t theme)
     st.screen = screen;
     st.theme = theme;
     st.group_lines = true;
+    st.wl_paging = true;     // the defaults of the configuration
+    st.wl_step_free = true;
     strcpy(st.url, "http://bimfo.local");
     return st;
 }
@@ -185,33 +187,40 @@ int main(void)
     cfg_stop_t all = {.kind = STOP_WL, .id = 60201468};
     int64_t wl_now = load_wl(&b, "wl_westbahnhof_diva.json", &all, "Westbahnhof");
     st = state(UI_SCREEN_BOARD, THEME_WL);
-    render("wl_grouped", "Westbahnhof, all lines, grouped (next two)", &st, &b, wl_now);
-    render("wl_grouped_blink", "same, one second later (blinking *)", &st, &b, wl_now + 1);
+    render("wl_grouped", "Westbahnhof, next departure per line and direction", &st, &b, wl_now);
+    render("wl_grouped_blink", "same, one second later (the square jumps)", &st, &b, wl_now + 1);
+    render("wl_page2", "ten seconds later: the next page of lines", &st, &b, wl_now + 10);
     st.group_lines = false;
-    render("wl_list", "Westbahnhof, list of departures", &st, &b, wl_now);
+    render("wl_list", "grouping off: the same, the WL style always groups", &st, &b, wl_now);
 
     cfg_stop_t sel = {.kind = STOP_WL, .id = 60201468, .nsel = 3,
                       .sel = {{"U3", 'H', 4921}, {"U3", 'R', 4920}, {"52", 'H', 464}}};
     load_wl(&b, "wl_westbahnhof_diva.json", &sel, "Westbahnhof U3 + 52");
     st = state(UI_SCREEN_BOARD, THEME_WL);
-    render("wl_selected", "only U3 both directions + 52 Baumgarten", &st, &b, wl_now);
+    render("wl_selected", "only U3 both directions + 52 Baumgarten, by line (paging on)", &st, &b, wl_now);
+    st.wl_paging = false;
+    render("wl_selected_by_time", "same with paging off: next departure first", &st, &b, wl_now);
+    st.wl_paging = true;
     st.walk_min[0] = 4;
     render("wl_walk4", "same with 4 min walking time", &st, &b, wl_now);
     st.walk_min[0] = 0;
 
     load_wl(&b, "wl_westbahnhof_diva.json", &all, "Westbahnhof");
     strcpy(b.notice, "U6: Unregelm\xC3\xA4\xC3\x9Fige Intervalle wegen eines Fahrzeugschadens");
-    render("wl_notice", "traffic info ticker", &st, &b, wl_now);
+    render("wl_notice", "traffic info: not shown by default, like the real displays", &st, &b, wl_now);
+    st.wl_notice = true;
+    render("wl_notice_on", "traffic info ticker (setting on)", &st, &b, wl_now);
+    st.wl_notice = false;
     b.notice[0] = 0;
     strcpy(st.status, "Offline - Stand 10:31");
-    render("wl_offline", "stale data warning in header", &st, &b, wl_now);
+    render("wl_offline", "offline: no warning, like the real displays", &st, &b, wl_now);
     st.status[0] = 0;
 
     load_wl(&b, "wl_johnstrasse_4925.json", NULL, "Johnstra\xC3\x9F" "e");
     render("wl_johnstrasse", "single U3 platform", &st, &b, wl_now);
 
     board_clear(&b);
-    render("wl_loading", "no data yet", &st, &b, wl_now);
+    render("wl_loading", "no data yet: \"Fahrplanaushang beachten\"", &st, &b, wl_now);
     b.fetched_at = wl_now;
     strcpy(b.title, "Westbahnhof");
     render("wl_empty", "fetched, nothing departs", &st, &b, wl_now);
@@ -231,7 +240,57 @@ int main(void)
     synth(&b, wl_now, "VAB 1", "Flughafen Wien", 145, VT_BUS, 0);
     st = state(UI_SCREEN_BOARD, THEME_WL);
     st.group_lines = false;
-    render("wl_edge", "umlauts, long names, due now, >99 min", &st, &b, wl_now);
+    st.wl_paging = false;   // the first three lines
+    render("wl_edge", "umlauts, long names (shortened, then scrolling), due now, >99 min", &st, &b, wl_now);
+    st.wl_paging = true;
+    b.count = 0;
+    synth(&b, wl_now, "13A", "H\xC3\xB6" "chst\xC3\xA4" "dtplatz", 3, VT_BUS, DEP_F_BARRIER_FREE);
+    synth(&b, wl_now, "VAB 1", "Flughafen Wien", 9, VT_BUS, 0);
+    synth(&b, wl_now, "U2Z", "Seestadt", 12, VT_METRO, DEP_F_REALTIME);
+    render("wl_edge2", "13A small A, scheduled times with a leading zero, VAB 1 in two rows", &st, &b, wl_now);
+
+    // As in the photos (docs/research/wl_display): wrapping and U-/S-Bahn symbols.
+    board_clear(&b);
+    b.fetched_at = wl_now;
+    synth(&b, wl_now, "1", "Stefan-Fadinger-Platz", 1, VT_TRAM, DEP_F_REALTIME | DEP_F_BARRIER_FREE);
+    synth(&b, wl_now, "D", "Hauptbahnhof Ost S", 17, VT_TRAM, DEP_F_REALTIME);
+    synth(&b, wl_now, "71", "Zentralfriedhof 2. Tor", 24, VT_TRAM, DEP_F_REALTIME | DEP_F_BARRIER_FREE);
+    st.group_lines = true;
+    render("wl_burgtheater", "Burgtheater photo: wrapping, S-Bahn symbol", &st, &b, wl_now);
+    board_clear(&b);
+    b.fetched_at = wl_now;
+    synth(&b, wl_now, "49", "Ring, U Volkstheater", 7, VT_TRAM, DEP_F_REALTIME | DEP_F_BARRIER_FREE);
+    synth(&b, wl_now, "5", "Praterstern S U", 8, VT_TRAM, DEP_F_REALTIME | DEP_F_BARRIER_FREE);
+    synth(&b, wl_now, "48A", "Ring, U Volkstheater", 4, VT_BUS, DEP_F_REALTIME | DEP_F_BARRIER_FREE);
+    board_sort(&b);
+    render("wl_symbols", "U- and S-Bahn symbols, 48A without wheelchair", &st, &b, wl_now);
+
+    // Next tram not low-floor: it takes turns (20 s each) with the next one that is.
+    int64_t t = wl_now - wl_now % 40;
+    board_clear(&b);
+    b.fetched_at = t;
+    synth(&b, t, "62", "Lainz, Wolkersbergenstra\xC3\x9F" "e", 2, VT_TRAM, DEP_F_REALTIME);
+    synth(&b, t, "62", "Lainz, Wolkersbergenstra\xC3\x9F" "e", 9, VT_TRAM, DEP_F_REALTIME | DEP_F_BARRIER_FREE);
+    synth(&b, t, "1", "Prater Hauptallee", 4, VT_TRAM, DEP_F_REALTIME | DEP_F_BARRIER_FREE);
+    synth(&b, t, "D", "Nu\xC3\x9F" "dorf, Heiligenst\xC3\xA4" "dter Stra\xC3\x9F" "e / Zehenthofgasse", 6, VT_TRAM,
+          DEP_F_REALTIME);
+    render("wl_step_free", "62 not low-floor, D has no low-floor tram (and is shortened), 1 is", &st, &b, t);
+    render("wl_step_free_alt", "20 s later: the low-floor 62 in 9 min, wheelchair blinking (on)", &st, &b, t + 20);
+    render("wl_step_free_blink", "one second later: wheelchair off", &st, &b, t + 21);
+    st.theme = THEME_COMPACT;
+    render("compact_edge", "same in compact style", &st, &b, wl_now);
+
+    // --- Wiener Linien data, compact theme --------------------------------
+    load_wl(&b, "wl_westbahnhof_diva.json", &all, "Westbahnhof");
+    st = state(UI_SCREEN_BOARD, THEME_COMPACT);
+    render("compact_grouped", "Westbahnhof, all lines, grouped (next two)", &st, &b, wl_now);
+    st.group_lines = false;
+    render("compact_list", "Westbahnhof, list of departures", &st, &b, wl_now);
+    strcpy(b.notice, "U6: Unregelm\xC3\xA4\xC3\x9Fige Intervalle wegen eines Fahrzeugschadens");
+    strcpy(st.status, "Offline - Stand 10:31");
+    render("compact_notice", "ticker and stale data warning", &st, &b, wl_now);
+    st.no_stops = true;
+    render("compact_nostops", "nothing configured", &st, &b, wl_now);
 
     // --- OEBB data, OEBB theme --------------------------------------------
     int64_t oebb_now = tu_vienna_to_utc(2026, 10, 25, 10, 30);
@@ -285,6 +344,8 @@ int main(void)
     st = state(UI_SCREEN_BOARD, THEME_WL);
     st.group_lines = false;
     render("mixed_wl", "WL + OEBB merged, WL style", &st, &b, oebb_now);
+    st.theme = THEME_COMPACT;
+    render("mixed_compact", "WL + OEBB merged, compact style", &st, &b, oebb_now);
     st.theme = THEME_OEBB;
     render("mixed_oebb", "WL + OEBB merged, OEBB style", &st, &b, oebb_now);
 

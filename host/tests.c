@@ -134,6 +134,28 @@ static void test_text(void)
     strcpy(s, "Ybbs Bahnhof");
     CHECK(tx_strip_suffix(s, " Bahnhof"));
     CHECK_STR(s, "Ybbs");
+
+    char m[4];
+    tx_split_transfers("Stadion U", s, sizeof(s), m, sizeof(m));
+    CHECK_STR(s, "Stadion");
+    CHECK_STR(m, "U");
+    tx_split_transfers("Praterstern S U", s, sizeof(s), m, sizeof(m));
+    CHECK_STR(s, "Praterstern");
+    CHECK_STR(m, "SU");
+    tx_split_transfers("Parlament, U Volkstheater", s, sizeof(s), m, sizeof(m));
+    CHECK_STR(s, "Parlament, Volkstheater");
+    CHECK_STR(m, "U");
+    tx_split_transfers("Burggasse, Stadthalle U, X  ", s, sizeof(s), m, sizeof(m));
+    CHECK_STR(s, "Burggasse, Stadthalle, X");
+    tx_split_transfers("U-Bahn Station S U U", s, sizeof(s), m, sizeof(m));
+    CHECK_STR(s, "U-Bahn Station");
+    CHECK_STR(m, "SU");
+    tx_split_transfers("Geiereckstra\xC3\x9F" "e", s, sizeof(s), m, sizeof(m));
+    CHECK_STR(s, "Geiereckstra\xC3\x9F" "e");
+    CHECK_STR(m, "");
+    tx_split_transfers("Stra\xC3\x9F" "e U", d, 6, m, 2);  // would cut the ß
+    CHECK_STR(d, "Stra");
+    CHECK_STR(m, "U");
 }
 
 static const departure_t *find(const board_t *b, const char *line, char dir)
@@ -374,11 +396,13 @@ static void test_config(void)
     CHECK_STR(c.hostname, "bimfo");
     CHECK_INT(c.refresh_s, 30);
     CHECK(!c.auto_update);  // automatic updates are opt-in
+    CHECK(!c.wl_notice);    // like the real displays
+    CHECK(c.wl_paging && c.wl_step_free);
     char err[64];
 
     const char *json =
         "{\"wifi\":{\"ssid\":\"Zuhause\",\"pass\":\"geheim123\"},\"hostname\":\"Küchen Monitor!\","
-        "\"theme\":\"oebb\",\"group\":false,\"brightness\":500,\"refresh\":5,\"flip\":true,\"auto_update\":true,"
+        "\"theme\":\"oebb\",\"group\":false,\"wl_notice\":true,\"wl_paging\":false,\"brightness\":500,\"refresh\":5,\"flip\":true,\"auto_update\":true,"
         "\"night\":{\"brightness\":5,\"start\":\"23:15\",\"end\":\"6:05\"},"
         "\"stops\":[{\"kind\":\"wl\",\"name\":\"Westbahnhof\",\"id\":60201468,\"walk\":4,"
         "\"sel\":[{\"line\":\"U3\",\"dir\":\"H\",\"rbl\":4921},{\"line\":\"\"},{\"line\":\"6\",\"dir\":\"X\"}]},"
@@ -390,6 +414,9 @@ static void test_config(void)
     CHECK_STR(c.hostname, "kchenmonitor");
     CHECK_INT(c.theme, THEME_OEBB);
     CHECK(!c.group_lines);
+    CHECK(c.wl_notice);
+    CHECK(!c.wl_paging);
+    CHECK(c.wl_step_free);  // not in the JSON: default kept
     CHECK_INT(c.brightness, 100);
     CHECK_INT(c.refresh_s, 15);
     CHECK(c.flip);
@@ -491,9 +518,10 @@ static void test_board(void)
         uint8_t stop;
         uint8_t flags;
     } in[] = {
-        {"U3", "Ottakring", 7, 0, 0}, {"U3", "Simmering", 2, 0, 0}, {"U3", "Ottakring", 1, 0, 0},
-        {"52", "Baumgarten", 0, 1, 0}, {"U3", "Ottakring", 12, 0, 0}, {"S 50", "Purkersdorf", 3, 1, DEP_F_CANCELLED},
-        {"6", "Burggasse", -3, 0, 0},
+        {"U3", "Ottakring", 7, 0, 0}, {"U3", "Simmering", 2, 0, DEP_F_BARRIER_FREE}, {"U3", "Ottakring", 1, 0, 0},
+        {"52", "Baumgarten", 0, 1, 0}, {"U3", "Ottakring", 12, 0, DEP_F_BARRIER_FREE},
+        {"S 50", "Purkersdorf", 3, 1, DEP_F_CANCELLED}, {"6", "Burggasse", -3, 0, 0},
+        {"U3", "Simmering", 9, 0, DEP_F_BARRIER_FREE},
     };
     for (size_t i = 0; i < sizeof(in) / sizeof(in[0]); i++) {
         departure_t *d = board_add(&b);
@@ -517,7 +545,28 @@ static void test_board(void)
     CHECK_STR(rows[0].dep->line, "52");
     CHECK_STR(rows[1].dep->towards, "Ottakring");
     CHECK_INT(rows[1].next_minutes, 7);
-    CHECK_INT(rows[2].next_minutes, -1);
+    CHECK(rows[0].step_free == NULL);  // no barrier-free 52 follows
+    // The next barrier-free U3 to Ottakring is the one in 12 minutes.
+    CHECK(rows[1].step_free != NULL && dep_minutes(rows[1].step_free, now) == 12);
+    CHECK_STR(rows[2].dep->towards, "Simmering");
+    CHECK_INT(rows[2].next_minutes, 9);
+    CHECK(rows[2].step_free == NULL);  // the first one is barrier-free already
+
+    CHECK(board_line_cmp("2", "18") < 0);
+    CHECK(board_line_cmp("18", "D") < 0);
+    CHECK(board_line_cmp("D", "N25") < 0);
+    CHECK(board_line_cmp("N25", "U3") < 0);
+    CHECK(board_line_cmp("13", "13A") < 0);
+    CHECK(board_line_cmp("U2", "U2Z") < 0);
+    CHECK(board_line_cmp("S 7", "S 45") < 0);
+    CHECK(board_line_cmp("52", "52") == 0);
+    // By line: 52 before U3; both U3 rows keep their order (Ottakring departs first).
+    board_rows_by_line(rows, n);
+    CHECK_STR(rows[0].dep->line, "52");
+    CHECK_STR(rows[1].dep->towards, "Ottakring");
+    CHECK_STR(rows[2].dep->towards, "Simmering");
+    board_rows_by_line(rows + 1, 2);
+    CHECK_STR(rows[1].dep->towards, "Ottakring");
 
     // Rows full: the next time must still be found further down the list.
     n = board_rows(&b, now, true, NULL, rows, 2);
@@ -525,16 +574,16 @@ static void test_board(void)
     CHECK_INT(rows[1].next_minutes, 7);
 
     n = board_rows(&b, now, false, NULL, rows, 8);
-    CHECK_INT(n, 6);  // cancelled stays visible in list mode
+    CHECK_INT(n, 7);  // cancelled stays visible in list mode
     n = board_rows(&b, now, false, NULL, rows, 2);
     CHECK_INT(n, 2);
 
     uint8_t walk[BOARD_MAX_STOPS] = {5, 0};
     n = board_rows(&b, now, false, walk, rows, 8);
-    CHECK_INT(n, 4);  // stop 0 needs >= 5 min: only U3 7/12; stop 1: 52, S 50
+    CHECK_INT(n, 5);  // stop 0 needs >= 5 min: only U3 7/12/9; stop 1: 52, S 50
     // Without a clock nothing is dropped as "departed".
     n = board_rows(&b, 0, false, NULL, rows, 8);
-    CHECK_INT(n, 7);
+    CHECK_INT(n, 8);
 
     board_t big, merged;
     board_clear(&big);

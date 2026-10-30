@@ -9,7 +9,7 @@
 #include "textutil.h"
 #include "timeutil.h"
 
-static const char *const THEME_NAMES[THEME_COUNT] = {"wl", "oebb"};
+static const char *const THEME_NAMES[THEME_COUNT] = {"wl", "compact", "oebb"};
 
 const char *cfg_theme_name(uint8_t theme)
 {
@@ -22,6 +22,8 @@ void cfg_defaults(app_config_t *c)
     strcpy(c->hostname, "bimfo");
     c->theme = THEME_WL;
     c->group_lines = true;
+    c->wl_paging = true;
+    c->wl_step_free = true;
     c->brightness = 80;
     c->night_brightness = 15;
     c->night_start = 22 * 60;
@@ -144,6 +146,9 @@ bool cfg_from_json(app_config_t *c, const char *json, char *err, size_t errlen)
         if (strcmp(theme, THEME_NAMES[i]) == 0) n.theme = (uint8_t)i;
     }
     get_bool(root, "group", &n.group_lines);
+    get_bool(root, "wl_notice", &n.wl_notice);
+    get_bool(root, "wl_paging", &n.wl_paging);
+    get_bool(root, "wl_step_free", &n.wl_step_free);
     GET_INT(root, "brightness", 0, 100, n.brightness);
     GET_INT(root, "refresh", 15, 600, n.refresh_s);
     get_bool(root, "flip", &n.flip);
@@ -187,6 +192,9 @@ char *cfg_to_json(const app_config_t *c, bool include_secrets)
     cJSON_AddStringToObject(root, "hostname", c->hostname);
     cJSON_AddStringToObject(root, "theme", cfg_theme_name(c->theme));
     cJSON_AddBoolToObject(root, "group", c->group_lines);
+    cJSON_AddBoolToObject(root, "wl_notice", c->wl_notice);
+    cJSON_AddBoolToObject(root, "wl_paging", c->wl_paging);
+    cJSON_AddBoolToObject(root, "wl_step_free", c->wl_step_free);
     cJSON_AddNumberToObject(root, "brightness", c->brightness);
     cJSON_AddNumberToObject(root, "refresh", c->refresh_s);
     cJSON_AddBoolToObject(root, "flip", c->flip);

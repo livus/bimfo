@@ -37,6 +37,9 @@ static void build_state(ui_state_t *st, const app_config_t *cfg)
     memset(st, 0, sizeof(*st));
     st->theme = cfg->theme;
     st->group_lines = cfg->group_lines;
+    st->wl_notice = cfg->wl_notice;
+    st->wl_paging = cfg->wl_paging;
+    st->wl_step_free = cfg->wl_step_free;
     st->no_stops = cfg->nstops == 0;
     for (int i = 0; i < cfg->nstops && i < BOARD_MAX_STOPS; i++) {
         st->walk_min[i] = cfg->stops[i].walk_min;

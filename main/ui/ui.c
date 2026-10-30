@@ -16,7 +16,14 @@ static struct {
 
 static const ui_theme_t *theme_for(uint8_t theme)
 {
-    return theme == THEME_OEBB ? &ui_theme_oebb : &ui_theme_wl;
+    switch (theme) {
+    case THEME_COMPACT:
+        return &ui_theme_compact;
+    case THEME_OEBB:
+        return &ui_theme_oebb;
+    default:
+        return &ui_theme_wl;
+    }
 }
 
 lv_obj_t *ui_label(lv_obj_t *parent, const lv_font_t *font, uint32_t color, int x, int y, int w,

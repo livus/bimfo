@@ -11,7 +11,7 @@
 #define CFG_MAX_SEL     8
 
 typedef enum { STOP_WL = 0, STOP_OEBB = 1 } stop_kind_t;
-typedef enum { THEME_WL = 0, THEME_OEBB = 1, THEME_COUNT } theme_t;
+typedef enum { THEME_WL = 0, THEME_COMPACT = 1, THEME_OEBB = 2, THEME_COUNT } theme_t;
 
 // One selected line at a stop. Wiener Linien: line + direction + platform
 // (RBL number). OEBB: only `line` is used, as a filter.
@@ -37,6 +37,9 @@ typedef struct {
     char hostname[32];
     uint8_t theme;              // theme_t
     bool group_lines;           // one row per line+direction with the next two times
+    bool wl_notice;             // Wiener Linien style: show traffic info (the real displays do not)
+    bool wl_paging;             // Wiener Linien style: page through more lines than fit
+    bool wl_step_free;          // Wiener Linien style: alternate with the next low-floor tram
     uint8_t brightness;         // 0..100
     uint8_t night_brightness;   // 0..100
     uint16_t night_start;       // minutes after midnight; start == end disables

@@ -20,6 +20,7 @@ typedef struct {
 } ui_theme_t;
 
 extern const ui_theme_t ui_theme_wl;
+extern const ui_theme_t ui_theme_compact;
 extern const ui_theme_t ui_theme_oebb;
 
 // Single-line label at a fixed position; `w` 0 means size to content.

@@ -108,7 +108,18 @@ try {
   check(!$("update-check").disabled, "check button enabled again");
 
   console.log("display settings and save");
+  const shown = (id) => !$(id).closest("label").classList.contains("hidden");
+  check(shown("wl-notice") && shown("wl-paging") && shown("wl-step-free") && !shown("group"),
+        "WL style: only its own settings shown");
+  check(!$("wl-notice").checked && $("wl-paging").checked && $("wl-step-free").checked, "WL settings default");
+  $("wl-notice").checked = true;
+  $("wl-notice").dispatchEvent(new w.Event("input", { bubbles: true }));
+  $("wl-paging").checked = false;
+  $("wl-paging").dispatchEvent(new w.Event("input", { bubbles: true }));
+  click($("theme").querySelector("[data-theme=compact]"));
+  check(shown("group") && !shown("wl-notice") && shown("flip"), "Kompakt: grouping shown, WL settings hidden");
   click($("theme").querySelector("[data-theme=oebb]"));
+  check(!shown("group") && !shown("wl-paging") && shown("flip"), "OEBB: neither shown");
   type($("brightness"), "55");
   type($("hostname"), "Küche-Monitor");
   check($("host-preview").textContent === "kche-monitor", "hostname sanitised live");
@@ -117,6 +128,7 @@ try {
   await until(() => $("save").disabled && $("overlay").style.display === "flex", "saved, restart overlay (hostname change)");
   const cfg = await (await fetch(BASE + "/api/config")).json();
   check(cfg.theme === "oebb" && cfg.brightness === 55 && cfg.hostname === "kueche", "display settings saved");
+  check(cfg.wl_notice === true && cfg.wl_paging === false && cfg.wl_step_free === true, "WL settings saved");
   check(cfg.stops.length === 3, "three stops saved");
   check(cfg.auto_update === true, "automatic updates switched on");
   const wl = cfg.stops[1], oe = cfg.stops[2];

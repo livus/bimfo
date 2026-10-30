@@ -137,6 +137,9 @@ int board_rows(const board_t *b, int64_t now, bool group, const uint8_t *walk_mi
                     if (rows[r].next_minutes < 0) {
                         rows[r].next_minutes = dep_minutes(d, now);
                     }
+                    if (!rows[r].step_free && !(o->flags & DEP_F_BARRIER_FREE) && (d->flags & DEP_F_BARRIER_FREE)) {
+                        rows[r].step_free = d;
+                    }
                     merged = true;
                     break;
                 }
@@ -147,7 +150,37 @@ int board_rows(const board_t *b, int64_t now, bool group, const uint8_t *walk_mi
         }
         rows[n].dep = d;
         rows[n].next_minutes = -1;
+        rows[n].step_free = NULL;
         n++;
     }
     return n;
+}
+
+int board_line_cmp(const char *a, const char *b)
+{
+    while (*a && *b) {
+        bool da = *a >= '0' && *a <= '9', db = *b >= '0' && *b <= '9';
+        if (da && db) {
+            long va = strtol(a, (char **)&a, 10), vb = strtol(b, (char **)&b, 10);
+            if (va != vb) return va < vb ? -1 : 1;
+            continue;
+        }
+        if (*a != *b) return (unsigned char)*a < (unsigned char)*b ? -1 : 1;
+        a++;
+        b++;
+    }
+    return *a ? 1 : *b ? -1 : 0;
+}
+
+void board_rows_by_line(board_row_t *rows, int n)
+{
+    // Insertion sort: stable, and boards are short.
+    for (int i = 1; i < n; i++) {
+        board_row_t r = rows[i];
+        int j = i;
+        for (; j > 0 && board_line_cmp(rows[j - 1].dep->line, r.dep->line) > 0; j--) {
+            rows[j] = rows[j - 1];
+        }
+        rows[j] = r;
+    }
 }

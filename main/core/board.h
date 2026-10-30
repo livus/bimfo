@@ -50,10 +50,12 @@ typedef struct {
 } board_t;
 
 // One rendered row: a departure plus, when grouping by line, the minutes of the
-// following departure of the same line/direction (-1 if there is none).
+// following departure of the same line/direction (-1 if there is none) and, if
+// `dep` is not barrier-free, the next one of the line/direction that is (or NULL).
 typedef struct {
     const departure_t *dep;
     int next_minutes;
+    const departure_t *step_free;
 } board_row_t;
 
 void board_clear(board_t *b);
@@ -77,3 +79,9 @@ int dep_minutes(const departure_t *d, int64_t now);
 // time of their stop (walk_min may be NULL), optionally groups by line+towards.
 int board_rows(const board_t *b, int64_t now, bool group, const uint8_t *walk_min,
                board_row_t *rows, int max_rows);
+
+// Orders line names as people read them: digit runs by value ("2" < "18" <
+// "D" < "N25" < "U3"). strcmp-style result.
+int board_line_cmp(const char *a, const char *b);
+// Sorts rows by line name, keeping the order of rows with the same line.
+void board_rows_by_line(board_row_t *rows, int n);

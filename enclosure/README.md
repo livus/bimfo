@@ -207,8 +207,8 @@ the clear box labels, which have a grey version for it.
 | Bin slogan sticker, dog sticker | all (optional) | On the front of the bin: slogan 2 mm below the lid seam, dog sticker between it and the band. |
 
 The grey of the sticker-paper labels is one colour (`boxgrey` in `decals/decals.tex`); compare it
-with your print and adjust it if needed. Rebuild the sheet with `node make_matrix.js && xelatex
-decals.tex` in `decals/`.
+with your print and adjust it if needed. Rebuild the sheet with `python make_matrix.py && xelatex
+decals.tex` in `decals/` (xelatex twice on a fresh checkout, or page 2 stays empty).
 
 ## Assembly: every version
 
@@ -302,7 +302,7 @@ If either doesn't fit, adjust the model ([parameters](#parameters)) and print th
 | `stl/fence_half.stl`, `stl/fence.stl` | Tube railing as two halves to pin together, or in one piece. |
 | `stl/can.stl` | The Mistkübel, with the ash tube and two grooves that sit on the railing. |
 | `stl/fittest.stl`, `stl/cabletest*.stl` | Fit test for the board; cable fit test (box end, pole top, pole cover top). |
-| [`decals/decals.pdf`](decals/decals.pdf) | The decal sheet. Source `decals/decals.tex` (xelatex, font in `decals/fonts`); the display matrices come from `decals/make_matrix.js`. |
+| [`decals/decals.pdf`](decals/decals.pdf) | The decal sheet. Source `decals/decals.tex` (xelatex, font in `decals/fonts`); the display matrices come from `decals/make_matrix.py`, with the firmware's LED faces (`tools/wl_glyphs.py`). |
 | `img/makerworld/` | Rendered images, made with [`render/`](render/README.md). |
 
 Regenerate a part with `openscad -o stl/shell.stl -D 'part="shell"' wl_display.scad`; the closed

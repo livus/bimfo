@@ -32,12 +32,12 @@ For the complete assembly you will need:
 
 ## Features
 
-Two styles, switchable on the settings page or with the BOOT button:
+Three styles, switchable on the settings page or with the BOOT button:
 
-| Wiener Linien | ÖBB |
-|---|---|
-| ![Wiener Linien style](docs/img/wl.png) | ![ÖBB style](docs/img/oebb.png) |
-| Yellow-amber LED dot-matrix on the faint glow of a backlit panel, split into three modules by dark seams, like the stop displays: line, destination, minutes, a blinking `*` when due, a wheelchair for low-floor trams and buses. | Colours, columns and fonts of the ÖBB station monitors: Zeit / Erwartet / Zug / Nach / Steig, delays in yellow, a white notice strip. |
+| Wiener Linien | Kompakt | ÖBB |
+|---|---|---|
+| ![Wiener Linien style](docs/img/wl.png) | ![Compact style](docs/img/compact.png) | ![ÖBB style](docs/img/oebb.png) |
+| A replica of the LED displays at tram and bus stops, on the green glow of their panel: three departures with line and minutes in big digits, the destination over two rows with U-Bahn and S-Bahn symbols, a wheelchair for low-floor trams, a jumping square when a vehicle leaves now and a leading zero for times from the timetable. More lines are shown page by page; when the next tram is not low-floor, it takes turns with the next one that is (wheelchair blinking). Like the real ones, no clock and no traffic info (can be switched on). | The same LED font on plain black, made for reading at a glance: stop name and clock on top, five departures. | Colours, columns and fonts of the ÖBB station monitors: Zeit / Erwartet / Zug / Nach / Steig, delays in yellow, a white notice strip. |
 
 - Any mix of Wiener Linien stops (tram, bus, U-Bahn, night bus) and ÖBB stations (S-Bahn,
   regional and long-distance trains).

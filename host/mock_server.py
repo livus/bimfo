@@ -30,7 +30,7 @@ TYPES = {"ptMetro": "metro", "ptTram": "tram", "ptTramWLB": "tram", "ptBusCity":
 
 state = {
     "config": {
-        "wifi": {"ssid": "Zuhause", "has_pass": True}, "hostname": "bimfo", "theme": "wl", "group": True,
+        "wifi": {"ssid": "Zuhause", "has_pass": True}, "hostname": "bimfo", "theme": "wl", "group": True, "wl_notice": False, "wl_paging": True, "wl_step_free": True,
         "brightness": 80, "refresh": 30, "flip": False, "auto_update": False,
         "night": {"brightness": 15, "start": "22:00", "end": "06:00"},
         "stops": [{"kind": "wl", "name": "Westbahnhof", "id": 60201468, "walk": 3,
