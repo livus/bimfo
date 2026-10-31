@@ -31,3 +31,12 @@ dist/
 *.pem
 !tools/bimfo-release-key.pub.pem
 !host/qemu_test_signing_key.pem
+
+# Photos and notes of the real displays: kept locally, not published
+docs/research/
+
+# Bambu Studio projects: published as print profiles on MakerWorld; the repository holds the STLs
+*.3mf
+
+# Full-size photos of the print, with their camera metadata: kept locally
+enclosure/img/originals/

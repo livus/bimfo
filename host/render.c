@@ -269,7 +269,7 @@ int main(void)
     synth(&b, wl_now, "U2Z", "Seestadt", 12, VT_METRO, DEP_F_REALTIME);
     render("wl_edge2", "13A small A, scheduled times with a leading zero, VAB 1 in two rows", &st, &b, wl_now);
 
-    // As in the photos (docs/research/wl_display): wrapping and U-/S-Bahn symbols.
+    // As in photos of the real displays: wrapping and U-/S-Bahn symbols.
     board_clear(&b);
     b.fetched_at = wl_now;
     synth(&b, wl_now, "1", "Stefan-Fadinger-Platz", 1, VT_TRAM, DEP_F_REALTIME | DEP_F_BARRIER_FREE);

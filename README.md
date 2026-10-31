@@ -3,6 +3,7 @@
 [![Latest release](https://img.shields.io/github/v/release/livus/bimfo)](https://github.com/livus/bimfo/releases/latest)
 [![Firmware: MIT](https://img.shields.io/badge/firmware-MIT-blue)](LICENSE)
 [![Enclosure: CC BY-NC-SA 4.0](https://img.shields.io/badge/enclosure-CC%20BY--NC--SA%204.0-lightgrey)](enclosure/LICENSE)
+[![MakerWorld](https://img.shields.io/badge/MakerWorld-Bimfo-00ae42)](https://makerworld.com/de/models/3523513-bimfo-live-departure-display)
 [![ESP-IDF 5.5](https://img.shields.io/badge/ESP--IDF-5.5-red)](https://docs.espressif.com/projects/esp-idf/en/v5.5.2/)
 
 **Live tram, bus, U-Bahn and train departures for Vienna, in a 3D-printed replica of the classic
@@ -27,8 +28,9 @@ For the complete assembly you will need:
   pads next to the USB port. Two short test prints check the board and the cable
   ([how](enclosure/README.md#check-the-board-and-your-cable)).
 - A USB power supply.
-- The printed enclosure: STLs, Bambu Studio projects and instructions are in
-  [`enclosure/`](enclosure/README.md). It also prints as a static model without the electronics.
+- The printed enclosure: print profiles on [MakerWorld](https://makerworld.com/de/models/3523513-bimfo-live-departure-display), STLs and
+  instructions in [`enclosure/`](enclosure/README.md). It also prints as a static model without
+  the electronics.
 
 ## Features
 
@@ -128,7 +130,7 @@ Everything above the hardware glue is tested on the PC; these points can only be
 board:
 
 1. `idf.py -p COMx erase-flash flash monitor` (erase once: new partition table).
-2. The boot screen appears in landscape, yellow-amber on a dark background. If red and blue look
+2. The boot screen appears in landscape: a yellow-amber tram driving on a dark green background. If red and blue look
    swapped, the panel colour order in `platform/lcd.c` (`rgb_endian`) is the place to look.
 3. Setup screen: the QR code scans and joins `Bimfo-XXXX`; the phone pops up the page.
 4. Save Wi-Fi → restart → `http://bimfo.local` is reachable; add a stop; departures appear within a
@@ -253,7 +255,7 @@ Bimfo is an independent project, not affiliated with Wiener Linien or ÖBB.
 ## Licence
 
 * **Firmware, host tools and scripts:** [MIT](LICENSE).
-* **The enclosure** (everything in `enclosure/`: model, STL/3MF files, images, decal sheet):
+* **The enclosure** (everything in `enclosure/`: model, STL files, images, decal sheet):
   [CC BY-NC-SA 4.0](enclosure/LICENSE). Print it, share it and remix it for non-commercial use,
   crediting "Bimfo by Sebastian Röder", with remixes under the same licence. Selling prints or kits needs
   permission.

@@ -1,5 +1,5 @@
 """Glyphs of the Wiener Linien stop display fonts, drawn after photos of the
-displays (docs/research/wl_display). One character is one LED.
+displays. One character is one LED.
 
 TEXT: destinations and messages. 11 rows: capitals in rows 0-8 (baseline below
 row 8), x-height rows 3-8, descenders rows 9-10. Entries are (top row, rows

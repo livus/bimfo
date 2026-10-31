@@ -8,15 +8,17 @@ Cycles renders of the Bimfo model for the MakerWorld page and the READMEs, writt
 .\make_renders.ps1 -Blender "C:\path\to\blender.exe" -Samples 32 -Shots hero   # quick check
 ```
 
-Needs OpenSCAD and Blender 4.5, and the UI frame `host/out/wl_grouped@3x.png` from the
-firmware's host renderer (`host/render.c`). On Windows, keep Blender in a short path: unpacked
-deep inside a temp folder it fails to start (DLL init error 0xC0000142) because its files exceed
-the 260-character path limit.
+Needs OpenSCAD and Blender 4.5, and the UI frames `host/out/wl_burgtheater@3x.png`,
+`compact_grouped@3x.png` and `oebb_delays@3x.png` from the firmware's host renderer
+(`host/render.c`). On Windows, keep Blender in a short path: unpacked deep inside a temp folder
+it fails to start (DLL init error 0xC0000142) because its files exceed the 260-character path
+limit.
 
 | Shot | What |
 |---|---|
 | `hero` | Front three-quarter view, display on, Vienna tram stop behind |
 | `display` | Close-up of the screen |
+| `styles` | Three models in a row, slightly turned, showing the Wiener Linien, Kompakt and ÖBB styles |
 | `back` | From behind: mock back window, speakers, bin on the railing |
 | `detail` | The bin, railing and track |
 | `night` | Night look on a dark backdrop |
@@ -31,6 +33,12 @@ How it works:
   screen and renders each shot. The daylight shots render the model on a transparent background,
   lit by an HDRI, with its shadow from a shadow-catcher floor; the compositor lays it over the
   blurred photo, so the photo keeps its own colours.
+
+Covers: `py -3 make_covers.py` (needs Pillow and numpy) writes `cover_web.jpg` (4:3, 2400×1800)
+and `cover_mobile.jpg` (3:4, 1800×2400) from the print photo `front_1.jpg`: the photo with a
+little more contrast and colour, beside or below a panel drawn like the stop display, amber LEDs
+in the firmware's Wiener Linien face (`tools/wl_glyphs.py`) on its green glow, with the tram of
+the start screen.
 
 Background assets (downloaded on first run into `assets/`, both CC0, no attribution required):
 

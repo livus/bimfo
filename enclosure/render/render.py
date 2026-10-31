@@ -10,7 +10,13 @@ from mathutils import Vector
 argv = sys.argv[sys.argv.index("--") + 1:]
 BUILD, SCREEN, OUT, SAMPLES = argv[0], argv[1], argv[2], int(argv[3])
 STL = os.path.join(BUILD, "stl")
-SHOTS = argv[4:] or ["hero", "display", "back", "detail", "night", "exploded", "exploded_night", "static", "static_back"]
+SHOTS = argv[4:] or ["hero", "display", "styles", "back", "detail", "night", "exploded", "exploded_night",
+                     "static", "static_back"]
+# the "styles" shot: three models in a row, turned a little, one per display style. The
+# frames lie next to <screen_png> (host/out).
+STYLES = ["wl_burgtheater@3x.png", "compact_grouped@3x.png", "oebb_delays@3x.png"]
+STYLE_TURN, STYLE_STEP, STYLE_AZ, STYLE_DIST = 42, (50, 0), -5, 0.3   # deg, mm, deg, m
+STYLE_TARGET = (-0.002, 0.0, -0.002)
 ASSETS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 HDRI = os.path.join(ASSETS, "zawiszy_czarnego_2k.hdr")
 PLATE = os.path.join(ASSETS, "vienna_tram_stop.jpg")
@@ -114,7 +120,7 @@ def import_parts(offsets=None, board=False, parts=None):
         except Exception:
             bpy.ops.object.shade_auto_smooth(angle=math.radians(35))
 
-def screen(strength, dy=0.0):
+def screen(strength, dy=0.0, frame=SCREEN):
     # black cover glass behind the window, and the lit active area showing the real UI frame
     y = GLASS_Y + dy * MM
     bpy.ops.mesh.primitive_plane_add(size=1, location=(WIN_CX, y - 0.02 * MM, 0), rotation=(math.radians(90), 0, 0))
@@ -133,7 +139,7 @@ def screen(strength, dy=0.0):
     b.inputs["Specular IOR Level"].default_value = 0.2
     b.inputs["Coat Weight"].default_value = 0.15
     tex = nt.nodes.new("ShaderNodeTexImage")
-    tex.image = bpy.data.images.load(SCREEN)
+    tex.image = bpy.data.images.load(frame)
     tex.interpolation = "Closest"
     nt.links.new(tex.outputs["Color"], b.inputs["Emission Color"])
     b.inputs["Emission Strength"].default_value = strength
@@ -295,8 +301,31 @@ def render(name):
     bpy.ops.render.render(write_still=True)
     print("wrote", path)
 
+def lineup(turn, step):
+    # one model per style in a row, each turned by `turn` degrees about its screen centre and
+    # moved `step` (mm, x and y) on from the one before; the middle one stays in place
+    for i, frame in enumerate(STYLES):
+        before = set(bpy.data.objects)
+        import_parts()
+        screen(2.5, frame=os.path.join(os.path.dirname(SCREEN), frame))
+        pivot = bpy.data.objects.new("model%d" % i, None)
+        bpy.context.collection.objects.link(pivot)
+        pivot.location = (WIN_CX, GLASS_Y, 0)
+        bpy.context.view_layer.update()
+        for ob in set(bpy.data.objects) - before - {pivot}:
+            ob.parent = pivot
+            ob.matrix_parent_inverse = pivot.matrix_world.inverted()
+        pivot.location += Vector((step[0], step[1], 0)) * (i - 1) * MM
+        pivot.rotation_euler = (0, 0, math.radians(turn))
+
 for shot in SHOTS:
     reset()
+    if shot == "styles":
+        lineup(STYLE_TURN, STYLE_STEP)
+        t = STYLE_TARGET
+        outdoor(camera(t, STYLE_AZ, 6, STYLE_DIST, 70, fstop=11), t, STYLE_AZ)
+        render(shot)
+        continue
     if shot.startswith("exploded"):
         import_parts(EXPLODE, board=True)
     elif shot.startswith("static"):

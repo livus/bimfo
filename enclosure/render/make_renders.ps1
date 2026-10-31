@@ -15,10 +15,14 @@ $assets = Join-Path $here "assets"
 $build = Join-Path $here "build"
 $stl = Join-Path $build "stl"
 $out = Join-Path (Split-Path $here) "img\makerworld"
-$screen = Join-Path $here "..\..\host\out\wl_grouped@3x.png"
+$screen = Join-Path $here "..\..\host\out\wl_burgtheater@3x.png"
 New-Item -ItemType Directory -Force $assets, $stl, $out | Out-Null
 
-if (-not (Test-Path $screen)) { throw "UI frame $screen missing: build and run the host renderer (host/render.c) first." }
+# the screen frame, plus the other two styles for the "styles" shot
+foreach ($frame in "wl_burgtheater", "compact_grouped", "oebb_delays") {
+    $file = Join-Path (Split-Path $screen) "$frame@3x.png"
+    if (-not (Test-Path $file)) { throw "UI frame $file missing: build and run the host renderer (host/render.c) first." }
+}
 
 # CC0 assets: Vienna tram stop photo (Wikimedia Commons) and urban HDRI (Poly Haven)
 $downloads = @{

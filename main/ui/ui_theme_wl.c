@@ -1,7 +1,7 @@
-// Wiener Linien look: the LED countdown displays at tram and bus stops (see
-// docs/research/wl_display). Three entries of two text rows each: the line in
-// big digits (a trailing letter small, as in "13A"), a wheelchair for low-floor
-// trams, the destination wrapped onto both rows with U-Bahn/S-Bahn symbols and
+// Wiener Linien look: the LED countdown displays at tram and bus stops. Three
+// entries of two text rows each: the line in big digits (a trailing letter
+// small, as in "13A"), a wheelchair for low-floor trams, the destination
+// wrapped onto both rows with U-Bahn/S-Bahn symbols and
 // the minutes in big digits - with a leading zero when the time is only from
 // the timetable, and a square jumping between the bottom corners when the
 // vehicle leaves now. More lines than fit are shown page by page. When the next

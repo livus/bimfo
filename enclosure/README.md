@@ -10,6 +10,9 @@ With the Waveshare **ESP32-S3-LCD-1.47B** inside, it shows live departures (firm
 [main README](../README.md)). Without it, it is a static model with a black, switched-off display,
 or a lit one from the decal sheet.
 
+Ready-made Bambu Studio print profiles for all four versions are on
+**[MakerWorld](https://makerworld.com/de/models/3523513-bimfo-live-departure-display)**; this folder has the STLs, the source and the instructions.
+
 ![Bimfo at a Vienna tram stop](img/makerworld/hero.png)
 
 | Static model | Exploded | Parts as printed |
@@ -30,7 +33,7 @@ Two questions decide which version you print:
 | **Live display** (with ESP32) | [**A**: Multicolour, live display](#a-multicolour-live-display) | [**C**: Single colour, live display](#c-single-colour-live-display) |
 | **Static model** (no electronics) | [**B**: Multicolour, static model](#b-multicolour-static-model) | [**D**: Single colour, static model](#d-single-colour-static-model) |
 
-Each version has its own print profile on MakerWorld with the same letter and name. The sections
+Each version has its own print profile on [MakerWorld](https://makerworld.com/de/models/3523513-bimfo-live-departure-display) with the same letter and name. The sections
 below list what that version needs and which of the chapters further down to read, in order.
 
 > **Nozzle:** a 0.4 mm nozzle prints every part. Only the small black text "Linie" /
@@ -149,19 +152,20 @@ Everything except the cap (and the bin, if it gets its orange) can share one gre
 
 ## Multicolour parts
 
-The box face and the back cover are Bambu Studio projects: each is one object with the text (and the
-back window) as a second part on filament 2. Open the 3MF and map filament 2 to black.
+The box face and the back cover are two-part objects: the part, with its text (and the back
+window) as an inlay on filament 2, black. The [MakerWorld print profiles](https://makerworld.com/de/models/3523513-bimfo-live-departure-display) have them set up;
+to build them yourself, see the last point below.
 
-| Part | File | Filament |
+| Part | Files | Filament |
 |---|---|---|
-| Box (front) | `shell_with_labels.3mf` | Light grey + black text. Face down. |
-| Back cover, live display | `back_with_labels.3mf` | Light grey + black window and text. Outer face down. Has slits for the board's pin headers. |
-| Back cover, static model | `back_closed_with_labels.3mf` | Light grey + black window and text. Outer face down. Closed. |
+| Box (front) | `shell.stl` + `labels.stl` | Light grey + black text. Face down. |
+| Back cover, live display | `back.stl` + `back_labels.stl` | Light grey + black window and text. Outer face down. Has slits for the board's pin headers. |
+| Back cover, static model | `back_closed.stl` + `back_closed_labels.stl` | Light grey + black window and text. Outer face down. Closed. |
 | Display stand-in (static model only) | `screen_dummy.stl` | Black. Display face down: on the textured plate it comes out matte, like a switched-off display. |
 
-- **Box face down on the textured PEI plate.** That gives the matte, powder-coated look. The 3MF
-  projects print at 0.16 mm layers. The text sits in the first layer, which they print slowly
-  (25 mm/s, infill 30 mm/s) with 0.42 mm lines, so the small letters stay put. Keep *Arachne* (the
+- **Box face down on the textured PEI plate.** That gives the matte, powder-coated look. Print
+  at 0.16 mm layers. The text sits in the first layer: print it slowly (25 mm/s, infill 30 mm/s)
+  with 0.42 mm lines, so the small letters stay put; the print profiles do this. Keep *Arachne* (the
   default) and *Detect thin walls* on.
 - **The text needs a 0.2 mm nozzle** to be legible (1.7 mm capitals). With 0.4 mm, map filament 2
   to light grey as well, so the face comes out flat, and apply the label decal from the
@@ -169,24 +173,24 @@ back window) as a second part on filament 2. Open the 3MF and map filament 2 to 
 - **The bin's orange:** set filament changes on the layer slider (right-click, *Change filament*):
   orange at **6.0 mm**, back to grey at **13.0 mm** (the "Misttelefon" band), and orange again at
   **43.3 mm** (the tip of the ash tube). Paint the rim of the opening orange, or leave it grey.
-- **To build the projects yourself:** select the part and its inlay (for example `shell.stl` and
+- **To build the objects yourself:** select the part and its inlay (for example `shell.stl` and
   `labels.stl`) in **one** import and answer "Yes" to *load as a single object with multiple
   parts*. Importing them one at a time, or with *Add part*, puts the letters next to the box instead
   of in it.
 
 ## Single-colour parts
 
-Print the same projects as in multicolour, but with every part in light grey, so the faces come out
-flat; the text and the windows come from the decal sheet.
+Print the same two-part objects as in multicolour, but with both parts in light grey, so the faces
+come out flat; the text and the windows come from the decal sheet.
 
 | Part | File | Filament |
 |---|---|---|
-| Box (front) | `shell_with_labels.3mf`, both parts light grey | Light grey. Face down. |
-| Back cover, live display | `back_with_labels.3mf`, both parts light grey | Light grey. Outer face down. |
-| Back cover, static model | `back_closed_with_labels.3mf`, both parts light grey | Light grey. Outer face down. |
+| Box (front) | `shell.stl` + `labels.stl`, both light grey | Light grey. Face down. |
+| Back cover, live display | `back.stl` + `back_labels.stl`, both light grey | Light grey. Outer face down. |
+| Back cover, static model | `back_closed.stl` + `back_closed_labels.stl`, both light grey | Light grey. Outer face down. |
 | Display stand-in (static model only) | `screen_dummy.stl` | Black. Display face down. |
 
-- Print the box face down on the textured PEI plate (see the multicolour notes); the 3MF keeps the
+- Print the box face down on the textured PEI plate (see the multicolour notes), with the
   slow first layer, which also gives a clean face.
 - The bin is plain grey; the band and the ash tube's tip are decals. Or pause at the heights given
   for [multicolour](#multicolour-parts) and swap to orange by hand.
@@ -292,9 +296,9 @@ If either doesn't fit, adjust the model ([parameters](#parameters)) and print th
 | File | What |
 |---|---|
 | `wl_display.scad` | Parametric source (OpenSCAD 2021.01+). `part=` picks what to render. |
-| `stl/shell.stl`, `stl/labels.stl`, `stl/shell_with_labels.3mf` | Box with both brackets and the pole section between them, its text inlay, and both as one Bambu Studio project. |
-| `stl/back.stl`, `stl/back_labels.stl`, `stl/back_with_labels.3mf` | Snap-in back cover with slits for the board's pin headers, its inlay (mock window and text), and both as a project. |
-| `stl/back_closed.stl`, `stl/back_closed_labels.stl`, `stl/back_closed_with_labels.3mf` | The same, closed, for the static model. |
+| `stl/shell.stl`, `stl/labels.stl` | Box with both brackets and the pole section between them, and its text inlay. |
+| `stl/back.stl`, `stl/back_labels.stl` | Snap-in back cover with slits for the board's pin headers, and its inlay (mock window and text). |
+| `stl/back_closed.stl`, `stl/back_closed_labels.stl` | The same, closed, for the static model. |
 | `stl/screen_dummy.stl` | Static model: stand-in for the board, with its outline and standoffs. |
 | `stl/pole.stl`, `stl/pole_cover.stl`, `stl/pole_top.stl`, `stl/cap.stl` | Pole with the rear cable slot, the round cover for that slot, the pole above the box, the red cap. |
 | `stl/speaker_bracket.stl`, `stl/horn.stl` | Fan-shaped speaker plate with two yokes; the PA horn (print two). |
@@ -303,10 +307,10 @@ If either doesn't fit, adjust the model ([parameters](#parameters)) and print th
 | `stl/can.stl` | The Mistkübel, with the ash tube and two grooves that sit on the railing. |
 | `stl/fittest.stl`, `stl/cabletest*.stl` | Fit test for the board; cable fit test (box end, pole top, pole cover top). |
 | [`decals/decals.pdf`](decals/decals.pdf) | The decal sheet. Source `decals/decals.tex` (xelatex, font in `decals/fonts`); the display matrices come from `decals/make_matrix.py`, with the firmware's LED faces (`tools/wl_glyphs.py`). |
-| `img/makerworld/` | Rendered images, made with [`render/`](render/README.md). |
+| `img/makerworld/` | Rendered images and the covers, made with [`render/`](render/README.md); photos of the print. |
 
 Regenerate a part with `openscad -o stl/shell.stl -D 'part="shell"' wl_display.scad`; the closed
-back cover with `-D header_pins=false`. After changing the box or a back cover, rebuild its 3MF.
+back cover with `-D header_pins=false`. After changing the box or a back cover, export its inlay too.
 
 ## Parameters
 
@@ -336,7 +340,7 @@ Measured on one board and one cable; check these if your parts differ:
 | `boot_len` | 7 | Boot length below the head, until the cable is thin enough to bend |
 | `cable_d` | 4.4 | Cable diameter (sets the slots in the pole and the base) |
 
-Then re-export `shell`, `back` (and the 3MF projects), `pole`, `pole_cover`, `base`, `base_strip`
+Then re-export `shell`, `back` (with their inlays), `pole`, `pole_cover`, `base`, `base_strip`
 and the cable test pieces.
 
 ## What it is modelled on
